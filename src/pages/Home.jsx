@@ -5,12 +5,17 @@ export const Home = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Slide definitions with images AND per-slide content
   const slides = [
-    "https://images.unsplash.com/photo-1646978567314-32cfd5a8854e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8dGFibGUlMjB0ZW5uaXN8ZW58MHx8MHx8fDA%3D",
-    "https://images.unsplash.com/photo-1708268418738-4863baa9cf72?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8dGFibGUlMjB0ZW5uaXN8ZW58MHx8MHx8fDA%3D",
-    "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=1600&auto=format&fit=crop",
-    "https://media.istockphoto.com/id/1343562812/photo/girl-playing-table-tennis-in-school-uniform-in-school.webp?a=1&b=1&s=612x612&w=0&k=20&c=6gVHVVsioDpk8ecyKgmhVtiWSiplalaqGMqftQC161M=",
-    "https://images.unsplash.com/photo-1502224562085-639556652f33?q=80&w=1600&auto=format&fit=crop"
+    {
+      img: "https://images.unsplash.com/photo-1646978567314-32cfd5a8854e?w=1600&auto=format&fit=crop&q=80",
+      type: "tt"
+    },
+
+    {
+      img: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?q=80&w=1600&auto=format&fit=crop",
+      type: "chess"
+    }
   ];
 
   // Auto slide every 4 seconds
@@ -33,44 +38,39 @@ export const Home = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-8">
       {/* Combined Unified Hero Slider Section */}
       <section className="relative w-full h-[650px] md:h-[550px] rounded-3xl overflow-hidden shadow-2xl bg-slate-950 mt-5 mb-5 transition-colors duration-300">
-        
+
         {/* Background Image Carousel */}
         {slides.map((slide, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
           >
             <img
-              src={slide}
+              src={slide.img}
               alt={`Slide ${index + 1}`}
               className="w-full h-full object-cover"
             />
             {/* Dark Overlay for Text Contrast */}
-            <div className="absolute inset-0 bg-black/65 md:bg-black/55"></div>
+            <div className={`absolute inset-0 ${slide.type === 'chess' ? 'bg-black/70 md:bg-black/60' : 'bg-black/65 md:bg-black/55'}`}></div>
           </div>
         ))}
 
-        {/* Combined Overlay Content (Unified Layer) */}
-        <div className="absolute inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 text-left">
-          
-          {/* Top/Middle Text Content Area */}
+        {/* === TABLE TENNIS CONTENT (slides 0–3) === */}
+        <div className={`absolute inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 text-left transition-opacity duration-700 ${slides[currentSlide]?.type === 'tt' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
           <div className="space-y-4 max-w-2xl mt-4 md:mt-2">
             <span className="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-semibold text-blue-300 tracking-wide uppercase">
-              College Sports Event 2026
+              🏓 Registration Open · 2026
             </span>
             <h1 className="font-outfit text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
-              MPGI Table Tennis{' '}
+              Ready to Serve, Smash,{' '}
               <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                Championship
+                and Succeed?
               </span>
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-              Unleash your spin, dominate the table, and bring glory to your department. Register now for the ultimate college table tennis tournament. Singles and doubles events are open!
+              Register now for the Table Tennis Tournament and be part of an exciting event filled with competition, teamwork, and sportsmanship. Challenge yourself, showcase your skills, and enjoy the spirit of the game.
             </p>
-
-            {/* Combined Stats Grid overlay */}
             <div className="grid grid-cols-3 gap-3 max-w-md pt-2">
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
                 <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">₹100</span>
@@ -86,23 +86,66 @@ export const Home = () => {
               </div>
             </div>
           </div>
-
-          {/* Bottom Actions Area (Glassmorphism Buttons Side-by-Side) */}
           <div className="flex gap-4 mb-2 md:mb-0">
             <button
               onClick={() => navigate('/register')}
               className="px-6 py-3 rounded-full text-white font-bold text-sm bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/20 hover:bg-white/25 dark:hover:bg-black/50 shadow-lg hover:shadow-black/20 active:scale-95 transition-all duration-300 cursor-pointer"
             >
-              Register Now
+              👉 Register Now
             </button>
             <button
               onClick={() => navigate('/live')}
               className="px-6 py-3 rounded-full text-white font-bold text-sm bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/20 hover:bg-white/25 dark:hover:bg-black/50 shadow-lg hover:shadow-black/20 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2"
             >
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Watch Live
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> 🎥 Watch Live
             </button>
           </div>
+        </div>
 
+        {/* === CHESS CONTENT (slide 4) === */}
+        <div className={`absolute inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 text-left transition-opacity duration-700 ${slides[currentSlide]?.type === 'chess' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+          <div className="space-y-4 max-w-2xl mt-4 md:mt-2">
+            <span className="inline-block px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-400/30 text-xs font-semibold text-yellow-300 tracking-wide uppercase">
+              ♟️ Coming Soon · 2026
+            </span>
+            <h1 className="font-outfit text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
+              Strategy. Focus.{' '}
+              <span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">
+                Victory.
+              </span>
+            </h1>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
+              The Chess Tournament is coming soon! Stay tuned for updates and prepare to showcase your tactical brilliance.
+            </p>
+            <div className="grid grid-cols-3 gap-3 max-w-md pt-2">
+              <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
+                <span className="block text-lg sm:text-xl">🎯</span>
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Individual Event</span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
+                <span className="block text-lg sm:text-xl">🧠</span>
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Sharpen Your Mind</span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
+                <span className="block text-lg sm:text-xl">🏆</span>
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Open to All Students</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-4 mb-2 md:mb-0">
+            <button
+              disabled
+              className="px-6 py-3 rounded-full text-white/60 font-bold text-sm bg-white/10 backdrop-blur-md border border-white/15 cursor-not-allowed select-none"
+            >
+              👉 Registration Coming Soon
+            </button>
+            <button
+              onClick={() => navigate('/live')}
+              className="px-6 py-3 rounded-full text-white font-bold text-sm bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/20 hover:bg-white/25 dark:hover:bg-black/50 shadow-lg hover:shadow-black/20 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> 🎥 Watch Live
+            </button>
+          </div>
         </div>
 
         {/* Previous Arrow */}
@@ -129,11 +172,10 @@ export const Home = () => {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                index === currentSlide
-                  ? 'bg-blue-400 w-6'
-                  : 'bg-white/30 hover:bg-white/50'
-              }`}
+              className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${index === currentSlide
+                ? 'bg-blue-400 w-6'
+                : 'bg-white/30 hover:bg-white/50'
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             ></button>
           ))}
@@ -143,7 +185,7 @@ export const Home = () => {
 
       {/* 50/50 Live Score & Schedule Section */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        
+
         {/* Left Column: Live Scoreboard */}
         <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-lg flex flex-col justify-between transition-colors duration-300 min-h-[320px]">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-4 mb-4">
