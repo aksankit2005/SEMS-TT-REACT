@@ -2,16 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
-const ADMIN_PASSCODE = "SEMS2026";
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE;
 
 export const Admin = () => {
   const { showToast } = useToast();
-  
+
   // Auth state
   const [passcode, setPasscode] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('sems_admin_authenticated') === 'true');
   const [loginError, setLoginError] = useState('');
-  
+
   // Dashboard data state
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -43,9 +43,9 @@ export const Admin = () => {
           "Accept": "application/json"
         }
       });
-      
+
       const resJson = await response.json();
-      
+
       if (resJson.status === "success") {
         setRegistrations(resJson.data || []);
         showToast("Database synced successfully!", "success");
@@ -98,17 +98,17 @@ export const Admin = () => {
       showToast("No data available to export.", "error");
       return;
     }
-    
+
     const headers = [
-      "Timestamp", "Category", 
-      "Primary Name", "Primary Roll No", "Primary College", "Primary Branch", "Primary Section", "Primary Year", "Primary Gender", "Primary Mobile", "Primary Email",
-      "Partner Name", "Partner Roll No", "Partner College", "Partner Branch", "Partner Section", "Partner Year", "Partner Mobile", "Partner Email",
+      "Timestamp", "Category",
+      "Primary Name", "Primary Roll No", "Primary College", "Primary Course", "Primary Year", "Primary Gender", "Primary Mobile", "Primary Email",
+      "Partner Name", "Partner Roll No", "Partner College", "Partner Course", "Partner Year", "Partner Mobile", "Partner Email",
       "Transaction ID", "Status"
     ];
-    
+
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\r\n";
-    
+
     registrations.forEach(row => {
       const line = [
         row.timestamp || "",
@@ -116,8 +116,7 @@ export const Admin = () => {
         row.fullName || "",
         row.rollNumber || "",
         row.collegeName || "",
-        row.branch || "",
-        row.section || "",
+        row.course || row.branch || "",
         row.year || "",
         row.gender || "",
         row.mobileNumber || "",
@@ -125,8 +124,7 @@ export const Admin = () => {
         row.partnerName || "",
         row.partnerRollNumber || "",
         row.partnerCollege || "",
-        row.partnerBranch || "",
-        row.partnerSection || "",
+        row.partnerCourse || row.partnerBranch || "",
         row.partnerYear || "",
         row.partnerMobile || "",
         row.partnerEmail || "",
@@ -135,11 +133,11 @@ export const Admin = () => {
       ];
       csvContent += line.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",") + "\r\n";
     });
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `SEMS_TT_Registrations_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("download", `SEMS_TT_Registrations_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -156,19 +154,19 @@ export const Admin = () => {
   const filteredRegistrations = registrations.filter(row => {
     const category = String(row.gameCategory || "").toLowerCase();
     const matchCategory = filterFormat === 'all' || category === filterFormat;
-    
+
     const query = searchQuery.toLowerCase().trim();
     const utrStr = String(row.transactionId || row.transactionID || "");
     const roll = String(row.rollNumber || "");
     const pRoll = String(row.partnerRollNumber || "");
-    
-    const matchSearch = !query || 
+
+    const matchSearch = !query ||
       (row.fullName && row.fullName.toLowerCase().includes(query)) ||
       (roll && roll.toLowerCase().includes(query)) ||
       (row.partnerName && row.partnerName.toLowerCase().includes(query)) ||
       (pRoll && pRoll.toLowerCase().includes(query)) ||
       (utrStr && utrStr.toLowerCase().includes(query));
-      
+
     return matchCategory && matchSearch;
   });
 
@@ -202,9 +200,8 @@ export const Admin = () => {
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
                   placeholder="Enter Access Key"
-                  className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                    loginError ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                  }`}
+                  className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${loginError ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                    }`}
                 />
               </div>
               {loginError && <span className="text-red-500 text-xs font-semibold mt-1">{loginError}</span>}
@@ -373,18 +370,17 @@ export const Admin = () => {
                 filteredRegistrations.map((row, idx) => {
                   const category = String(row.gameCategory || "").toLowerCase();
                   const utr = String(row.transactionId || row.transactionID || "");
-                  
+
                   return (
                     <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
                       <td className="p-4 align-top whitespace-nowrap font-medium text-slate-600 dark:text-slate-400">
                         {formatTimestamp(row.timestamp)}
                       </td>
                       <td className="p-4 align-top whitespace-nowrap">
-                        <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md uppercase ${
-                          category === 'singles'
+                        <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md uppercase ${category === 'singles'
                             ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                             : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                        }`}>
+                          }`}>
                           {category || "N/A"}
                         </span>
                       </td>

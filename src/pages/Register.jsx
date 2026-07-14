@@ -18,8 +18,7 @@ export const Register = () => {
     rollNumber: '',
     aadhaarNumber: '',
     collegeName: '',
-    branch: '',
-    section: '',
+    course: '',
     year: '',
     gender: '',
     mobileNumber: '',
@@ -28,8 +27,7 @@ export const Register = () => {
     partnerRollNumber: '',
     partnerAadhaar: '',
     partnerCollege: '',
-    partnerBranch: '',
-    partnerSection: '',
+    partnerCourse: '',
     partnerYear: '',
     partnerMobile: '',
     partnerEmail: ''
@@ -73,8 +71,7 @@ export const Register = () => {
     if (!formData.fullName.trim()) tempErrors.fullName = "Full Name is required";
     if (!formData.rollNumber.trim()) tempErrors.rollNumber = "Roll Number is required";
     if (!formData.collegeName.trim()) tempErrors.collegeName = "College Name is required";
-    if (!formData.branch.trim()) tempErrors.branch = "Branch is required";
-    if (!formData.section.trim()) tempErrors.section = "Section is required";
+    if (!formData.course.trim()) tempErrors.course = "Course is required";
     if (!formData.year) tempErrors.year = "Year of study is required";
     if (!formData.gender) tempErrors.gender = "Gender is required";
     
@@ -101,8 +98,7 @@ export const Register = () => {
       if (!formData.partnerName.trim()) tempErrors.partnerName = "Partner Name is required";
       if (!formData.partnerRollNumber.trim()) tempErrors.partnerRollNumber = "Partner Roll Number is required";
       if (!formData.partnerCollege.trim()) tempErrors.partnerCollege = "Partner College is required";
-      if (!formData.partnerBranch.trim()) tempErrors.partnerBranch = "Partner Branch is required";
-      if (!formData.partnerSection.trim()) tempErrors.partnerSection = "Partner Section is required";
+      if (!formData.partnerCourse.trim()) tempErrors.partnerCourse = "Partner Course is required";
       if (!formData.partnerYear) tempErrors.partnerYear = "Partner Year is required";
       
       if (!formData.partnerAadhaar.trim()) {
@@ -199,6 +195,10 @@ export const Register = () => {
               },
               body: JSON.stringify({
                 ...formData,
+                branch: formData.course,
+                partnerBranch: formData.partnerCourse,
+                section: "",
+                partnerSection: "",
                 gameCategory: gameCategory,
                 action: "register",
                 razorpayOrderId: response.razorpay_order_id,
@@ -218,8 +218,8 @@ export const Register = () => {
               
               // Reset state forms
               setFormData({
-                fullName: '', rollNumber: '', aadhaarNumber: '', collegeName: '', branch: '', section: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
-                partnerName: '', partnerRollNumber: '', partnerAadhaar: '', partnerCollege: '', partnerBranch: '', partnerSection: '', partnerYear: '', partnerMobile: '', partnerEmail: ''
+                fullName: '', rollNumber: '', aadhaarNumber: '', collegeName: '', course: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
+                partnerName: '', partnerRollNumber: '', partnerAadhaar: '', partnerCollege: '', partnerCourse: '', partnerYear: '', partnerMobile: '', partnerEmail: ''
               });
               setCurrentStep(1);
             } else {
@@ -469,46 +469,25 @@ export const Register = () => {
                   {errors.collegeName && <span className="text-red-500 text-xs font-semibold">{errors.collegeName}</span>}
                 </div>
 
-                {/* Branch */}
-                <div className="flex flex-col gap-1.5 text-left">
+                {/* Course */}
+                <div className="flex flex-col gap-1.5 text-left sm:col-span-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Branch / Department <span className="text-red-500">*</span>
+                    Course <span className="text-red-500">*</span>
                   </label>
                   <div className="relative flex items-center">
                     <i className="fa-solid fa-graduation-cap absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
                     <input
                       type="text"
-                      name="branch"
-                      value={formData.branch}
+                      name="course"
+                      value={formData.course}
                       onChange={handleInputChange}
-                      placeholder="e.g. Computer Science"
+                      placeholder="e.g. B.Tech Computer Science"
                       className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.branch ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                       }`}
                     />
                   </div>
-                  {errors.branch && <span className="text-red-500 text-xs font-semibold">{errors.branch}</span>}
-                </div>
-
-                {/* Section */}
-                <div className="flex flex-col gap-1.5 text-left">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Section <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative flex items-center">
-                    <i className="fa-solid fa-door-open absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                    <input
-                      type="text"
-                      name="section"
-                      value={formData.section}
-                      onChange={handleInputChange}
-                      placeholder="e.g. A, B, Sec-2"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.section ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
-                    />
-                  </div>
-                  {errors.section && <span className="text-red-500 text-xs font-semibold">{errors.section}</span>}
+                  {errors.course && <span className="text-red-500 text-xs font-semibold">{errors.course}</span>}
                 </div>
 
                 {/* Year Dropdown */}
@@ -710,46 +689,25 @@ export const Register = () => {
                     {errors.partnerCollege && <span className="text-red-500 text-xs font-semibold">{errors.partnerCollege}</span>}
                   </div>
 
-                  {/* Partner Branch */}
-                  <div className="flex flex-col gap-1.5 text-left">
+                  {/* Partner Course */}
+                  <div className="flex flex-col gap-1.5 text-left sm:col-span-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Partner Branch / Dept <span className="text-red-500">*</span>
+                      Partner Course <span className="text-red-500">*</span>
                     </label>
                     <div className="relative flex items-center">
                       <i className="fa-solid fa-graduation-cap absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
                       <input
                         type="text"
-                        name="partnerBranch"
-                        value={formData.partnerBranch}
+                        name="partnerCourse"
+                        value={formData.partnerCourse}
                         onChange={handleInputChange}
-                        placeholder="e.g. Information Technology"
+                        placeholder="e.g. B.Tech Computer Science"
                         className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerBranch ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                         }`}
                       />
                     </div>
-                    {errors.partnerBranch && <span className="text-red-500 text-xs font-semibold">{errors.partnerBranch}</span>}
-                  </div>
-
-                  {/* Partner Section */}
-                  <div className="flex flex-col gap-1.5 text-left">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Partner Section <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <i className="fa-solid fa-door-open absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                      <input
-                        type="text"
-                        name="partnerSection"
-                        value={formData.partnerSection}
-                        onChange={handleInputChange}
-                        placeholder="e.g. B, Sec-1"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerSection ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
-                      />
-                    </div>
-                    {errors.partnerSection && <span className="text-red-500 text-xs font-semibold">{errors.partnerSection}</span>}
+                    {errors.partnerCourse && <span className="text-red-500 text-xs font-semibold">{errors.partnerCourse}</span>}
                   </div>
 
                   {/* Partner Year Dropdown */}
