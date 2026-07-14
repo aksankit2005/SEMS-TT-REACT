@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
-const ADMIN_PASSCODE = import.meta.ADMIN_PASSCODE;
+const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE;
 
 export const Admin = () => {
   const { showToast } = useToast();
 
   // Auth state
   const [passcode, setPasscode] = useState('');
-  const [isAuthenticated, setIsAuthensticated] = useState(() => sessionStorage.getItem('sems_admin_authenticated') === 'true');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('sems_admin_authenticated') === 'true');
   const [loginError, setLoginError] = useState('');
 
   // Dashboard data state

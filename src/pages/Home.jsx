@@ -81,7 +81,7 @@ export const Home = () => {
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Doubles Entry</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
-                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">19 July</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">22 July</span>
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Reg. Deadline</span>
               </div>
             </div>

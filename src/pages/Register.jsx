@@ -7,7 +7,7 @@ const RAZORPAY_KEY_ID = "rzp_live_TDL9OG0BrV1qDp";
 
 export const Register = () => {
   const { showToast } = useToast();
-  
+
   // Step indicator state: 1 = Details, 2 = Payment
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -32,10 +32,10 @@ export const Register = () => {
     partnerMobile: '',
     partnerEmail: ''
   });
-  
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  
+
   const [statusModal, setStatusModal] = useState({
     visible: false,
     success: false,
@@ -46,7 +46,7 @@ export const Register = () => {
   // Handle Text inputs
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Numeric-only filter for Aadhaar Card Number
     if (name === "aadhaarNumber" || name === "partnerAadhaar") {
       const numericValue = value.replace(/\D/g, '').slice(0, 12);
@@ -54,9 +54,15 @@ export const Register = () => {
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-    
+
     // Clear validation error on change
-    if (errors[name]) {
+    if (name === "collegeName" || name === "partnerCollege") {
+      setErrors((prev) => ({
+        ...prev,
+        collegeName: null,
+        partnerCollege: null
+      }));
+    } else if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
   };
@@ -74,52 +80,56 @@ export const Register = () => {
     if (!formData.course.trim()) tempErrors.course = "Course is required";
     if (!formData.year) tempErrors.year = "Year of study is required";
     if (!formData.gender) tempErrors.gender = "Gender is required";
-    
+
     if (!formData.aadhaarNumber.trim()) {
       tempErrors.aadhaarNumber = "Aadhaar Card Number is required";
     } else if (!aadhaarPattern.test(formData.aadhaarNumber.trim())) {
       tempErrors.aadhaarNumber = "Aadhaar must be exactly 12 numeric digits";
     }
-    
+
     if (!formData.mobileNumber.trim()) {
       tempErrors.mobileNumber = "Mobile Number is required";
     } else if (!phonePattern.test(formData.mobileNumber.trim())) {
       tempErrors.mobileNumber = "Enter a valid 10-digit mobile number";
     }
-    
+
     if (!formData.emailAddress.trim()) {
       tempErrors.emailAddress = "Email address is required";
     } else if (!emailPattern.test(formData.emailAddress.trim())) {
       tempErrors.emailAddress = "Enter a valid email address";
     }
-    
+
     // Partner Validation if Doubles
     if (gameCategory === 'doubles') {
       if (!formData.partnerName.trim()) tempErrors.partnerName = "Partner Name is required";
       if (!formData.partnerRollNumber.trim()) tempErrors.partnerRollNumber = "Partner Roll Number is required";
-      if (!formData.partnerCollege.trim()) tempErrors.partnerCollege = "Partner College is required";
+      if (!formData.partnerCollege.trim()) {
+        tempErrors.partnerCollege = "Partner College is required";
+      } else if (formData.collegeName.trim() && formData.collegeName !== formData.partnerCollege) {
+        tempErrors.partnerCollege = "Both players must belong to the same college for Doubles registration.";
+      }
       if (!formData.partnerCourse.trim()) tempErrors.partnerCourse = "Partner Course is required";
       if (!formData.partnerYear) tempErrors.partnerYear = "Partner Year is required";
-      
+
       if (!formData.partnerAadhaar.trim()) {
         tempErrors.partnerAadhaar = "Partner Aadhaar Card Number is required";
       } else if (!aadhaarPattern.test(formData.partnerAadhaar.trim())) {
         tempErrors.partnerAadhaar = "Partner Aadhaar must be exactly 12 numeric digits";
       }
-      
+
       if (!formData.partnerMobile.trim()) {
         tempErrors.partnerMobile = "Partner Mobile Number is required";
       } else if (!phonePattern.test(formData.partnerMobile.trim())) {
         tempErrors.partnerMobile = "Enter a valid 10-digit mobile number";
       }
-      
+
       if (!formData.partnerEmail.trim()) {
         tempErrors.partnerEmail = "Partner Email address is required";
       } else if (!emailPattern.test(formData.partnerEmail.trim())) {
         tempErrors.partnerEmail = "Enter a valid email address";
       }
     }
-    
+
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
@@ -143,7 +153,7 @@ export const Register = () => {
   // Submit Handler (Launches Razorpay checkout)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (RAZORPAY_KEY_ID === "YOUR_RAZORPAY_KEY_ID") {
       showToast("Razorpay Key ID is not configured. Please add your Key ID inside Register.jsx.", "error");
       return;
@@ -151,7 +161,7 @@ export const Register = () => {
 
     setLoading(true);
     const amount = gameCategory === 'doubles' ? 200 : 100;
-    
+
     try {
       // 1. Request Razorpay Order ID from Google Apps Script Backend
       const orderResponse = await fetch(GOOGLE_SCRIPT_URL, {
@@ -165,12 +175,12 @@ export const Register = () => {
           rollNumber: formData.rollNumber
         })
       });
-      
+
       const orderResult = await orderResponse.json();
       if (orderResult.status !== "success") {
         throw new Error(orderResult.message || "Failed to create payment order");
       }
-      
+
       const orderId = orderResult.orderId;
 
       // 2. Configure and Open Razorpay Checkout overlay
@@ -186,7 +196,7 @@ export const Register = () => {
           // This callback runs only after successful checkout completion
           try {
             setLoading(true);
-            
+
             // Send payment signature details to Apps Script backend to verify and write to sheet
             const verifyResponse = await fetch(GOOGLE_SCRIPT_URL, {
               method: "POST",
@@ -206,7 +216,7 @@ export const Register = () => {
                 razorpaySignature: response.razorpay_signature
               })
             });
-            
+
             const verifyResult = await verifyResponse.json();
             if (verifyResult.status === "success") {
               setStatusModal({
@@ -215,7 +225,7 @@ export const Register = () => {
                 title: "Registration Verified!",
                 message: `Congratulations! Your payment has been captured (ID: ${response.razorpay_payment_id}) and registration details saved successfully.`
               });
-              
+
               // Reset state forms
               setFormData({
                 fullName: '', rollNumber: '', aadhaarNumber: '', collegeName: '', course: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
@@ -236,18 +246,23 @@ export const Register = () => {
           email: formData.emailAddress,
           contact: formData.mobileNumber
         },
-        theme: { color: "#3B82F6" }
+        theme: { color: "#3B82F6" },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          }
+        }
       };
 
       const rzp = new window.Razorpay(options);
-      
+
       rzp.on('payment.failed', function (response) {
         showToast(`Payment failed: ${response.error.description}`, "error");
         setLoading(false);
       });
 
       rzp.open();
-      
+
     } catch (err) {
       console.error(err);
       showToast(err.message || "An error occurred initiating checkout", "error");
@@ -257,36 +272,39 @@ export const Register = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Registration Deadline Notice */}
+      <div className="mb-8 p-4 bg-red-500/10 dark:bg-red-500/5 border-l-4 border-l-red-500 border border-slate-200 dark:border-slate-800 rounded-r-2xl rounded-l-md flex items-center gap-3 text-[#0f172a] dark:text-[#f8fafc] animate-fade-in">
+        <i className="fa-solid fa-triangle-exclamation text-red-500 dark:text-red-400 text-lg shrink-0"></i>
+        <span className="text-sm font-semibold">
+          Registration closes on 22 July. No registrations will be accepted after the deadline.
+        </span>
+      </div>
+
       {/* Wizard Step Progress Tracker */}
       <div className="flex justify-between items-center max-w-md mx-auto mb-10 select-none">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300 ${
-            currentStep === 1
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300 ${currentStep === 1
               ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/10'
               : 'border-green-500 bg-green-500 text-white'
-          }`}>
+            }`}>
             {currentStep > 1 ? <i className="fa-solid fa-check"></i> : "1"}
           </div>
-          <span className={`text-sm font-semibold transition-colors duration-300 ${
-            currentStep === 1 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
-          }`}>
+          <span className={`text-sm font-semibold transition-colors duration-300 ${currentStep === 1 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
+            }`}>
             Player Details
           </span>
         </div>
-        <div className={`flex-grow h-[2px] mx-4 rounded transition-colors duration-500 ${
-          currentStep > 1 ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-800'
-        }`}></div>
+        <div className={`flex-grow h-[2px] mx-4 rounded transition-colors duration-500 ${currentStep > 1 ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-800'
+          }`}></div>
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300 ${
-            currentStep === 2
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300 ${currentStep === 2
               ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/10'
               : 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 bg-transparent'
-          }`}>
+            }`}>
             2
           </div>
-          <span className={`text-sm font-semibold transition-colors duration-300 ${
-            currentStep === 2 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
-          }`}>
+          <span className={`text-sm font-semibold transition-colors duration-300 ${currentStep === 2 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
+            }`}>
             Payment & Submit
           </span>
         </div>
@@ -294,7 +312,7 @@ export const Register = () => {
 
       {/* Form Area */}
       <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-lg relative overflow-hidden transition-all duration-300">
-        
+
         {/* STEP 1: Details Form */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-fade-in">
@@ -315,14 +333,12 @@ export const Register = () => {
                     onChange={() => setGameCategory('singles')}
                     className="sr-only"
                   />
-                  <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${
-                    gameCategory === 'singles'
+                  <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${gameCategory === 'singles'
                       ? 'border-blue-500 bg-blue-500/5 dark:bg-blue-500/10'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1a2744]/40 hover:border-slate-300'
-                  }`}>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${
-                      gameCategory === 'singles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
                     }`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${gameCategory === 'singles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
+                      }`}>
                       <i className="fa-solid fa-user"></i>
                     </div>
                     <div className="flex flex-col text-left">
@@ -343,14 +359,12 @@ export const Register = () => {
                     onChange={() => setGameCategory('doubles')}
                     className="sr-only"
                   />
-                  <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${
-                    gameCategory === 'doubles'
+                  <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${gameCategory === 'doubles'
                       ? 'border-blue-500 bg-blue-500/5 dark:bg-blue-500/10'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1a2744]/40 hover:border-slate-300'
-                  }`}>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${
-                      gameCategory === 'doubles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
                     }`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${gameCategory === 'doubles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
+                      }`}>
                       <i className="fa-solid fa-user-group"></i>
                     </div>
                     <div className="flex flex-col text-left">
@@ -362,6 +376,14 @@ export const Register = () => {
                     )}
                   </div>
                 </label>
+              </div>
+
+              {/* Doubles Notice */}
+              <div className="mt-4 p-3.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 rounded-2xl flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+                <i className="fa-solid fa-circle-info text-blue-500 dark:text-blue-400 mt-0.5 shrink-0"></i>
+                <div className="font-medium leading-relaxed">
+                  Both team members must provide complete registration details. Registration Fee: ₹200 per team. Both players must belong to the same college.
+                </div>
               </div>
             </div>
 
@@ -388,9 +410,8 @@ export const Register = () => {
                       value={formData.fullName}
                       onChange={handleInputChange}
                       placeholder="e.g. Rahul Sharma"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.fullName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.fullName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     />
                   </div>
                   {errors.fullName && <span className="text-red-500 text-xs font-semibold">{errors.fullName}</span>}
@@ -409,9 +430,8 @@ export const Register = () => {
                       value={formData.rollNumber}
                       onChange={handleInputChange}
                       placeholder="e.g. 22BCE1024"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.rollNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.rollNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     />
                   </div>
                   {errors.rollNumber && <span className="text-red-500 text-xs font-semibold">{errors.rollNumber}</span>}
@@ -431,9 +451,8 @@ export const Register = () => {
                       onChange={handleInputChange}
                       placeholder="e.g. 123456789012"
                       maxLength="12"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.aadhaarNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.aadhaarNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     />
                   </div>
                   {errors.aadhaarNumber && <span className="text-red-500 text-xs font-semibold">{errors.aadhaarNumber}</span>}
@@ -450,9 +469,8 @@ export const Register = () => {
                       name="collegeName"
                       value={formData.collegeName}
                       onChange={handleInputChange}
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
-                        errors.collegeName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.collegeName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     >
                       <option value="" disabled>Select College</option>
                       <option value="MPEC">MPEC</option>
@@ -482,9 +500,8 @@ export const Register = () => {
                       value={formData.course}
                       onChange={handleInputChange}
                       placeholder="e.g. B.Tech Computer Science"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     />
                   </div>
                   {errors.course && <span className="text-red-500 text-xs font-semibold">{errors.course}</span>}
@@ -501,16 +518,15 @@ export const Register = () => {
                       name="year"
                       value={formData.year}
                       onChange={handleInputChange}
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
-                        errors.year ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.year ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     >
                       <option value="" disabled>Select Year</option>
                       <option value="1st Year">1st Year</option>
                       <option value="2nd Year">2nd Year</option>
                       <option value="3rd Year">3rd Year</option>
                       <option value="4th Year">4th Year</option>
-                      <option value="5th Year">5th Year</option>
+                      <option value="5th Year">5th Year/Intern</option>
                     </select>
                   </div>
                   {errors.year && <span className="text-red-500 text-xs font-semibold">{errors.year}</span>}
@@ -527,9 +543,8 @@ export const Register = () => {
                       name="gender"
                       value={formData.gender}
                       onChange={handleInputChange}
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
-                        errors.gender ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.gender ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     >
                       <option value="" disabled>Select Gender</option>
                       <option value="Male">Male</option>
@@ -553,9 +568,8 @@ export const Register = () => {
                       value={formData.mobileNumber}
                       onChange={handleInputChange}
                       placeholder="10-digit number"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.mobileNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.mobileNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     />
                   </div>
                   {errors.mobileNumber && <span className="text-red-500 text-xs font-semibold">{errors.mobileNumber}</span>}
@@ -574,9 +588,8 @@ export const Register = () => {
                       value={formData.emailAddress}
                       onChange={handleInputChange}
                       placeholder="e.g. you@college.edu"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                        errors.emailAddress ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                      }`}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.emailAddress ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
                     />
                   </div>
                   {errors.emailAddress && <span className="text-red-500 text-xs font-semibold">{errors.emailAddress}</span>}
@@ -608,9 +621,8 @@ export const Register = () => {
                         value={formData.partnerName}
                         onChange={handleInputChange}
                         placeholder="e.g. Aman Verma"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       />
                     </div>
                     {errors.partnerName && <span className="text-red-500 text-xs font-semibold">{errors.partnerName}</span>}
@@ -629,9 +641,8 @@ export const Register = () => {
                         value={formData.partnerRollNumber}
                         onChange={handleInputChange}
                         placeholder="e.g. 22BCE1045"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerRollNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerRollNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       />
                     </div>
                     {errors.partnerRollNumber && <span className="text-red-500 text-xs font-semibold">{errors.partnerRollNumber}</span>}
@@ -651,9 +662,8 @@ export const Register = () => {
                         onChange={handleInputChange}
                         placeholder="e.g. 987654321098"
                         maxLength="12"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerAadhaar ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerAadhaar ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       />
                     </div>
                     {errors.partnerAadhaar && <span className="text-red-500 text-xs font-semibold">{errors.partnerAadhaar}</span>}
@@ -670,9 +680,8 @@ export const Register = () => {
                         name="partnerCollege"
                         value={formData.partnerCollege}
                         onChange={handleInputChange}
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
-                          errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       >
                         <option value="" disabled>Select College</option>
                         <option value="MPEC">MPEC</option>
@@ -702,9 +711,8 @@ export const Register = () => {
                         value={formData.partnerCourse}
                         onChange={handleInputChange}
                         placeholder="e.g. B.Tech Computer Science"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       />
                     </div>
                     {errors.partnerCourse && <span className="text-red-500 text-xs font-semibold">{errors.partnerCourse}</span>}
@@ -721,9 +729,8 @@ export const Register = () => {
                         name="partnerYear"
                         value={formData.partnerYear}
                         onChange={handleInputChange}
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
-                          errors.partnerYear ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.partnerYear ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       >
                         <option value="" disabled>Select Year</option>
                         <option value="1st Year">1st Year</option>
@@ -749,9 +756,8 @@ export const Register = () => {
                         value={formData.partnerMobile}
                         onChange={handleInputChange}
                         placeholder="10-digit number"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerMobile ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerMobile ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       />
                     </div>
                     {errors.partnerMobile && <span className="text-red-500 text-xs font-semibold">{errors.partnerMobile}</span>}
@@ -770,9 +776,8 @@ export const Register = () => {
                         value={formData.partnerEmail}
                         onChange={handleInputChange}
                         placeholder="e.g. partner@college.edu"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                          errors.partnerEmail ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerEmail ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
                       />
                     </div>
                     {errors.partnerEmail && <span className="text-red-500 text-xs font-semibold">{errors.partnerEmail}</span>}
