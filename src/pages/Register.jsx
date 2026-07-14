@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6ZteLf4Bjg5UacdfYJqvT7kSRY0TDUq8ZfnHOHy-rgr9vZ_9p-nLBo2-MFZpYS9lgsA/exec";
-const DEFAULT_UPI_ID = "ankit738885-1@oksbi";
-const DEFAULT_PAYEE_NAME = "ANKIT KUMAR SINGH";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
+// Replace this with your actual Razorpay Key ID locally in this file!
+const RAZORPAY_KEY_ID = "rzp_live_TDL9OG0BrV1qDp";
 
 export const Register = () => {
   const { showToast } = useToast();
@@ -30,18 +30,10 @@ export const Register = () => {
     partnerSection: '',
     partnerYear: '',
     partnerMobile: '',
-    partnerEmail: '',
-    transactionId: ''
-  });
-  
-  const [screenshot, setScreenshot] = useState({
-    base64: '',
-    name: '',
-    sizeStr: ''
+    partnerEmail: ''
   });
   
   const [errors, setErrors] = useState({});
-  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const [statusModal, setStatusModal] = useState({
@@ -50,23 +42,6 @@ export const Register = () => {
     title: '',
     message: ''
   });
-  
-  const fileInputRef = useRef(null);
-
-  // Dynamic QR Code generation details
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-
-  useEffect(() => {
-    const amount = gameCategory === 'doubles' ? 150 : 100;
-    const roll = formData.rollNumber.trim() || "ROLL";
-    const name = formData.fullName.trim() || "PLAYER";
-    const note = `SEMS_${gameCategory === 'doubles' ? 'DBL' : 'SGL'}_${roll}_${name}`
-      .substring(0, 50)
-      .replace(/[^a-zA-Z0-9_]/g, "_");
-      
-    const upiUrl = `upi://pay?pa=${DEFAULT_UPI_ID}&pn=${encodeURIComponent(DEFAULT_PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
-    setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`);
-  }, [gameCategory, formData.fullName, formData.rollNumber]);
 
   // Handle Text inputs
   const handleInputChange = (e) => {
@@ -77,69 +52,6 @@ export const Register = () => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
-  };
-
-  // Copy UPI ID
-  const handleCopyUpi = () => {
-    navigator.clipboard.writeText(DEFAULT_UPI_ID)
-      .then(() => showToast("UPI ID copied to clipboard!", "success"))
-      .catch(() => showToast("Failed to copy UPI ID.", "error"));
-  };
-
-  // File drag & drop triggers
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
-  };
-
-  const processFile = (file) => {
-    if (!file.type.startsWith("image/")) {
-      showToast("Only image files are allowed!", "error");
-      return;
-    }
-    
-    const maxSize = 4 * 1024 * 1024;
-    if (file.size > maxSize) {
-      showToast("Screenshot must be smaller than 4MB!", "error");
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setScreenshot({
-        base64: e.target.result,
-        name: file.name,
-        sizeStr: formatBytes(file.size)
-      });
-      setErrors((prev) => ({ ...prev, screenshotFile: null }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveScreenshot = () => {
-    setScreenshot({ base64: '', name: '', sizeStr: '' });
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // Step 1 Validation
@@ -194,25 +106,6 @@ export const Register = () => {
     return Object.keys(tempErrors).length === 0;
   };
 
-  // Step 2 Validation
-  const validateStep2 = () => {
-    const tempErrors = {};
-    const utrPattern = /^\d{12}$/;
-    
-    if (!formData.transactionId.trim()) {
-      tempErrors.transactionId = "Transaction ID is required";
-    } else if (!utrPattern.test(formData.transactionId.trim())) {
-      tempErrors.transactionId = "UTR must be a valid 12-digit reference number";
-    }
-    
-    if (!screenshot.base64) {
-      tempErrors.screenshotFile = "Payment screenshot upload is required";
-    }
-    
-    setErrors((prev) => ({ ...prev, ...tempErrors }));
-    return Object.keys(tempErrors).length === 0;
-  };
-
   // Proceed to Step 2
   const handleNextStep = () => {
     if (validateStep1()) {
@@ -229,92 +122,115 @@ export const Register = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Submit Handler (on Step 2)
+  // Submit Handler (Launches Razorpay checkout)
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateStep2()) {
-      showToast("Please provide transaction details and screenshot.", "error");
+    if (RAZORPAY_KEY_ID === "YOUR_RAZORPAY_KEY_ID") {
+      showToast("Razorpay Key ID is not configured. Please add your Key ID inside Register.jsx.", "error");
       return;
     }
-    
+
     setLoading(true);
-    
-    const payload = {
-      ...formData,
-      gameCategory,
-      screenshotBase64: screenshot.base64,
-      screenshotName: screenshot.name,
-      timestamp: new Date().toISOString(),
-      action: "register"
-    };
+    const amount = gameCategory === 'doubles' ? 2 : 1;
     
     try {
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
+      // 1. Request Razorpay Order ID from Google Apps Script Backend
+      const orderResponse = await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          action: "createOrder",
+          amount: amount,
+          rollNumber: formData.rollNumber
+        })
       });
       
-      const result = await response.json();
-      
-      if (result.status === "success") {
-        setStatusModal({
-          visible: true,
-          success: true,
-          title: "Registration Submitted!",
-          message: "Your registration details and payment screenshot have been submitted successfully. The sports committee will verify your transaction ID shortly. Keep your transaction reference handy!"
-        });
-        
-        // Reset form & steps
-        setFormData({
-          fullName: '',
-          rollNumber: '',
-          collegeName: '',
-          branch: '',
-          section: '',
-          year: '',
-          gender: '',
-          mobileNumber: '',
-          emailAddress: '',
-          partnerName: '',
-          partnerRollNumber: '',
-          partnerCollege: '',
-          partnerBranch: '',
-          partnerSection: '',
-          partnerYear: '',
-          partnerMobile: '',
-          partnerEmail: '',
-          transactionId: ''
-        });
-        handleRemoveScreenshot();
-        setCurrentStep(1);
-      } else {
-        throw new Error(result.message || "Failed to save registration on server");
+      const orderResult = await orderResponse.json();
+      if (orderResult.status !== "success") {
+        throw new Error(orderResult.message || "Failed to create payment order");
       }
+      
+      const orderId = orderResult.orderId;
+
+      // 2. Configure and Open Razorpay Checkout overlay
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: amount * 100, // amount in paise
+        currency: "INR",
+        name: "SEMS Championship",
+        description: `Registration Fee - ${gameCategory.toUpperCase()}`,
+        image: "/logo.png",
+        order_id: orderId,
+        handler: async function (response) {
+          // This callback runs only after successful checkout completion
+          try {
+            setLoading(true);
+            
+            // Send payment signature details to Apps Script backend to verify and write to sheet
+            const verifyResponse = await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+              },
+              body: JSON.stringify({
+                ...formData,
+                gameCategory: gameCategory,
+                action: "register",
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
+            
+            const verifyResult = await verifyResponse.json();
+            if (verifyResult.status === "success") {
+              setStatusModal({
+                visible: true,
+                success: true,
+                title: "Registration Verified!",
+                message: `Congratulations! Your payment has been captured (ID: ${response.razorpay_payment_id}) and registration details saved successfully.`
+              });
+              
+              // Reset state forms
+              setFormData({
+                fullName: '', rollNumber: '', collegeName: '', branch: '', section: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
+                partnerName: '', partnerRollNumber: '', partnerCollege: '', partnerBranch: '', partnerSection: '', partnerYear: '', partnerMobile: '', partnerEmail: ''
+              });
+              setCurrentStep(1);
+            } else {
+              throw new Error(verifyResult.message || "Payment signature verification failed.");
+            }
+          } catch (error) {
+            showToast(error.message || "Verification failed.", "error");
+          } finally {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.emailAddress,
+          contact: formData.mobileNumber
+        },
+        theme: { color: "#3B82F6" }
+      };
+
+      const rzp = new window.Razorpay(options);
+      
+      rzp.on('payment.failed', function (response) {
+        showToast(`Payment failed: ${response.error.description}`, "error");
+        setLoading(false);
+      });
+
+      rzp.open();
+      
     } catch (err) {
       console.error(err);
-      setStatusModal({
-        visible: true,
-        success: false,
-        title: "Submission Error",
-        message: err.message || "An error occurred while uploading. Please check your internet connection or try again later."
-      });
-    } finally {
+      showToast(err.message || "An error occurred initiating checkout", "error");
       setLoading(false);
     }
-  };
-
-  // Helpers
-  const formatBytes = (bytes, decimals = 2) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   };
 
   return (
@@ -389,7 +305,7 @@ export const Register = () => {
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="font-outfit font-bold text-slate-900 dark:text-white">Singles</span>
-                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹100</span>
+                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹1</span>
                     </div>
                     {gameCategory === 'singles' && (
                       <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
@@ -417,7 +333,7 @@ export const Register = () => {
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="font-outfit font-bold text-slate-900 dark:text-white">Doubles</span>
-                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹150</span>
+                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹2</span>
                     </div>
                     {gameCategory === 'doubles' && (
                       <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
@@ -491,7 +407,7 @@ export const Register = () => {
                       name="collegeName"
                       value={formData.collegeName}
                       onChange={handleInputChange}
-                      placeholder="Enter College Name"
+                      placeholder="e.g. State Engineering College"
                       className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
                         errors.collegeName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                       }`}
@@ -700,7 +616,7 @@ export const Register = () => {
                         name="partnerCollege"
                         value={formData.partnerCollege}
                         onChange={handleInputChange}
-                        placeholder="e.g. College Name"
+                        placeholder="e.g. State Engineering College"
                         className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
                           errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                         }`}
@@ -826,7 +742,7 @@ export const Register = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold text-lg py-4 rounded-xl shadow-lg hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold text-lg py-4 rounded-xl shadow-lg hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 Next: Proceed to Payment <i className="fa-solid fa-arrow-right"></i>
               </button>
@@ -834,7 +750,7 @@ export const Register = () => {
           </div>
         )}
 
-        {/* STEP 2: Payment & Screenshot Upload */}
+        {/* STEP 2: Razorpay Payment Integration */}
         {currentStep === 2 && (
           <div className="space-y-8 animate-fade-in">
             <div>
@@ -842,142 +758,30 @@ export const Register = () => {
                 Payment details
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
-                Pay using the UPI details below and upload verification details
+                Complete your registration using our secure payment gateway
               </p>
 
-              <div className="bg-slate-50 dark:bg-[#1a2744]/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mb-6">
-                {/* fee summary */}
+              <div className="bg-slate-50 dark:bg-[#1a2744]/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 mb-6">
+                {/* Fee Summary */}
                 <div className="flex justify-between items-center border-b border-dashed border-slate-200 dark:border-slate-800 pb-4 mb-6">
-                  <span className="font-outfit font-bold text-slate-900 dark:text-white text-lg">Entry Fee Amount</span>
+                  <span className="font-outfit font-bold text-slate-950 dark:text-slate-100 text-lg">Entry Fee Amount</span>
                   <span className="font-outfit text-3xl font-extrabold text-green-500 dark:text-green-400">
-                    ₹{gameCategory === 'doubles' ? '150' : '100'}
+                    ₹{gameCategory === 'doubles' ? '2' : '1'}
                   </span>
                 </div>
 
-                {/* QR and details */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                  <div className="md:col-span-4 flex flex-col items-center gap-2">
-                    <div className="bg-white p-2 rounded-xl shadow-md w-44 h-44 flex items-center justify-center relative border border-slate-100">
-                      {qrCodeUrl ? (
-                        <img src={qrCodeUrl} alt="Scan to Pay UPI QR Code" className="w-full h-full object-contain" />
-                      ) : (
-                        <div className="text-blue-500"><i className="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>
-                      )}
-                    </div>
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
-                      <i className="fa-solid fa-qrcode"></i> Scan with any UPI App
-                    </p>
+                {/* Gateway visual detail */}
+                <div className="flex flex-col items-center justify-center py-6 text-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-3xl shadow-sm">
+                    <i className="fa-solid fa-shield-halved"></i>
                   </div>
-
-                  <div className="md:col-span-8 flex flex-col gap-4">
-                    <div className="flex flex-col gap-1 text-left">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">UPI ID</span>
-                      <div className="flex items-center justify-between bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl">
-                        <code className="font-mono font-bold text-slate-950 dark:text-slate-50">{DEFAULT_UPI_ID}</code>
-                        <button
-                          type="button"
-                          onClick={handleCopyUpi}
-                          className="text-blue-500 hover:scale-105 active:scale-95 p-1 transition-transform"
-                          title="Copy UPI ID"
-                        >
-                          <i className="fa-solid fa-copy"></i>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-0.5 text-left">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payee Name</span>
-                      <span className="font-semibold text-slate-900 dark:text-white">{DEFAULT_PAYEE_NAME}</span>
-                    </div>
-
-                    <div className="bg-blue-500/10 border border-blue-500/20 px-4 py-3 rounded-xl flex gap-3 text-xs text-slate-600 dark:text-slate-400 text-left">
-                      <i className="fa-solid fa-circle-info text-blue-500 text-sm mt-0.5"></i>
-                      <span>Scan the QR code to auto-fill the exact amount (₹100 / ₹150) for fast verification!</span>
-                    </div>
-                  </div>
+                  <h4 className="font-outfit font-bold text-slate-900 dark:text-white text-base">
+                    Secure Payment Gateway
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                    Powered by Razorpay. Pay instantly with UPI, Cards, Netbanking, or Wallets. Your registration will verify automatically.
+                  </p>
                 </div>
-              </div>
-            </div>
-
-            {/* Inputs verification */}
-            <div className="grid grid-cols-1 gap-5">
-              {/* UTR Input */}
-              <div className="flex flex-col gap-1.5 text-left">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  UPI Transaction ID / Ref No (12-digit UTR) <span className="text-red-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <i className="fa-solid fa-receipt absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                  <input
-                    type="text"
-                    name="transactionId"
-                    value={formData.transactionId}
-                    onChange={handleInputChange}
-                    placeholder="e.g. 612345678901"
-                    className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
-                      errors.transactionId ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                    }`}
-                  />
-                </div>
-                <span className="text-xs text-slate-400">Exactly 12 numeric digits from UPI transaction confirmation screen.</span>
-                {errors.transactionId && <span className="text-red-500 text-xs font-semibold">{errors.transactionId}</span>}
-              </div>
-
-              {/* Screenshot Upload */}
-              <div className="flex flex-col gap-1.5 text-left">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Payment Screenshot Upload <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current.click()}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
-                    dragActive ? 'border-blue-500 bg-blue-500/5' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1a2744]/40 hover:border-blue-500/50'
-                  } ${errors.screenshotFile ? 'border-red-500 bg-red-500/5' : ''}`}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-
-                  {!screenshot.base64 ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <i className="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-1"></i>
-                      <p className="font-semibold text-sm text-slate-900 dark:text-white">
-                        Drag & Drop payment screenshot, or <span className="text-blue-500 underline">Browse</span>
-                      </p>
-                      <p className="text-xs text-slate-400">PNG, JPG or JPEG (Max 4MB)</p>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-between bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 p-3 rounded-lg shadow-sm"
-                    >
-                      <div className="flex items-center gap-3 text-left">
-                        <i className="fa-regular fa-image text-2xl text-blue-500"></i>
-                        <div className="flex flex-col max-w-[200px] sm:max-w-md">
-                          <span className="text-xs font-semibold truncate text-slate-900 dark:text-white">{screenshot.name}</span>
-                          <span className="text-[10px] text-slate-400">{screenshot.sizeStr}</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleRemoveScreenshot}
-                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500/10 text-red-500 transition-colors"
-                        title="Remove file"
-                      >
-                        <i className="fa-solid fa-xmark text-lg"></i>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {errors.screenshotFile && <span className="text-red-500 text-xs font-semibold">{errors.screenshotFile}</span>}
               </div>
             </div>
 
@@ -986,7 +790,7 @@ export const Register = () => {
               <button
                 type="button"
                 onClick={handlePrevStep}
-                className="w-full sm:w-1/3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                className="w-full sm:w-1/3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
               >
                 <i className="fa-solid fa-arrow-left"></i> Edit Details
               </button>
@@ -994,14 +798,16 @@ export const Register = () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full sm:w-2/3 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold text-lg py-4 rounded-xl shadow-lg hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-2/3 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold text-lg py-4 rounded-xl shadow-lg hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>
-                    <i className="fa-solid fa-spinner fa-spin"></i> Verifying & Saving...
+                    <i className="fa-solid fa-spinner fa-spin"></i> Processing Checkout...
                   </>
                 ) : (
-                  <>Submit Registration & Verify</>
+                  <>
+                    <i className="fa-solid fa-credit-card"></i> Pay & Register Now
+                  </>
                 )}
               </button>
             </div>
@@ -1029,7 +835,7 @@ export const Register = () => {
             <button
               type="button"
               onClick={() => setStatusModal({ ...statusModal, visible: false })}
-              className="bg-blue-500 dark:bg-blue-600 text-white font-semibold py-3 px-8 rounded-xl hover:brightness-105 active:scale-95 transition-all w-full"
+              className="bg-blue-500 dark:bg-blue-600 text-white font-semibold py-3 px-8 rounded-xl hover:brightness-105 active:scale-95 transition-all w-full cursor-pointer"
             >
               Done
             </button>

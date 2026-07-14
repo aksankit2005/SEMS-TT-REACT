@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6ZteLf4Bjg5UacdfYJqvT7kSRY0TDUq8ZfnHOHy-rgr9vZ_9p-nLBo2-MFZpYS9lgsA/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
 const ADMIN_PASSCODE = "SEMS2026";
 
 export const Admin = () => {
@@ -17,9 +17,6 @@ export const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFormat, setFilterFormat] = useState('all');
-  
-  // Image preview modal state
-  const [previewImage, setPreviewImage] = useState(null);
 
   // Authenticate login
   const handleLogin = (e) => {
@@ -39,7 +36,13 @@ export const Admin = () => {
     setLoading(true);
     try {
       const url = `${GOOGLE_SCRIPT_URL}?action=read&passcode=${ADMIN_PASSCODE}`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+      
       const resJson = await response.json();
       
       if (resJson.status === "success") {
@@ -50,7 +53,7 @@ export const Admin = () => {
       }
     } catch (err) {
       console.error(err);
-      showToast("Error syncing registration database.", "error");
+      showToast("Error syncing registration database. Verify Google Web App deployment access.", "error");
     } finally {
       setLoading(false);
     }
@@ -83,7 +86,7 @@ export const Admin = () => {
       "Timestamp", "Category", 
       "Primary Name", "Primary Roll No", "Primary College", "Primary Branch", "Primary Section", "Primary Year", "Primary Gender", "Primary Mobile", "Primary Email",
       "Partner Name", "Partner Roll No", "Partner College", "Partner Branch", "Partner Section", "Partner Year", "Partner Mobile", "Partner Email",
-      "Transaction ID", "Screenshot URL"
+      "Transaction ID", "Status"
     ];
     
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -111,7 +114,7 @@ export const Admin = () => {
         row.partnerMobile || "",
         row.partnerEmail || "",
         row.transactionId || row.transactionID || "",
-        row.screenshotUrl || row.screenshotURL || ""
+        "Verified Automatically"
       ];
       csvContent += line.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",") + "\r\n";
     });
@@ -156,12 +159,12 @@ export const Admin = () => {
   const totalCount = registrations.length;
   const singlesCount = registrations.filter(r => r.gameCategory && String(r.gameCategory).toLowerCase() === 'singles').length;
   const doublesCount = registrations.filter(r => r.gameCategory && String(r.gameCategory).toLowerCase() === 'doubles').length;
-  const totalRevenue = (singlesCount * 100) + (doublesCount * 150);
+  const totalRevenue = (singlesCount * 1) + (doublesCount * 2); // ₹1 for singles, ₹2 for doubles in test mode
 
   // Authentication View
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto px-4 py-12">
+      <div className="max-w-md mx-auto px-4 py-12 animate-fade-in">
         <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-8 text-center shadow-lg transition-colors duration-300">
           <div className="w-16 h-16 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-500 dark:text-blue-400 text-xl flex items-center justify-center mx-auto mb-6">
             <i className="fa-solid fa-lock"></i>
@@ -191,7 +194,7 @@ export const Admin = () => {
             </div>
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold py-3 rounded-xl hover:brightness-105 active:scale-95 transition-all shadow-md"
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold py-3 rounded-xl hover:brightness-105 active:scale-95 transition-all shadow-md cursor-pointer"
             >
               Unlock Dashboard
             </button>
@@ -203,7 +206,7 @@ export const Admin = () => {
 
   // Dashboard View
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
       {/* Dashboard Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
@@ -218,13 +221,13 @@ export const Admin = () => {
           <button
             onClick={fetchDatabase}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121d33] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#121d33] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-sm rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
           >
             <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i> Refresh Data
           </button>
           <button
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-blue-500/10"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-blue-500/10 cursor-pointer"
           >
             <i className="fa-solid fa-file-excel"></i> Export CSV
           </button>
@@ -324,7 +327,7 @@ export const Admin = () => {
                 <th className="p-4 whitespace-nowrap">Team Partner Details</th>
                 <th className="p-4 whitespace-nowrap">Fee Paid</th>
                 <th className="p-4 whitespace-nowrap">Transaction Details</th>
-                <th className="p-4 whitespace-nowrap">Screenshot</th>
+                <th className="p-4 whitespace-nowrap">Verification Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -347,7 +350,6 @@ export const Admin = () => {
                 filteredRegistrations.map((row, idx) => {
                   const category = String(row.gameCategory || "").toLowerCase();
                   const utr = String(row.transactionId || row.transactionID || "");
-                  const sUrl = row.screenshotUrl || row.screenshotURL;
                   
                   return (
                     <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
@@ -396,28 +398,20 @@ export const Admin = () => {
                         )}
                       </td>
                       <td className="p-4 align-top whitespace-nowrap font-bold text-slate-900 dark:text-white">
-                        ₹{category === 'doubles' ? '150' : '100'}
+                        ₹{category === 'doubles' ? '2' : '1'}
                       </td>
                       <td className="p-4 align-top">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-mono font-bold text-slate-950 dark:text-slate-50 text-sm tracking-wide">{utr}</span>
                           <span className="text-xs font-semibold text-green-500 flex items-center gap-1">
-                            <i className="fa-solid fa-circle-check"></i> Submitted
+                            <i className="fa-solid fa-circle-check"></i> Captured
                           </span>
                         </div>
                       </td>
                       <td className="p-4 align-top whitespace-nowrap">
-                        {sUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewImage(sUrl)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-blue-500 dark:text-blue-400 font-semibold text-xs rounded-lg hover:bg-blue-500/10 hover:border-blue-500 transition-colors"
-                          >
-                            <i className="fa-regular fa-image"></i> View File
-                          </button>
-                        ) : (
-                          <span className="text-xs text-slate-400">No File</span>
-                        )}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-md text-xs font-bold">
+                          <i className="fa-solid fa-shield-check"></i> Razorpay Auto-Verified
+                        </span>
                       </td>
                     </tr>
                   );
@@ -427,25 +421,6 @@ export const Admin = () => {
           </table>
         </div>
       </div>
-
-      {/* Screenshot Preview Modal Overlay */}
-      {previewImage && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2100] flex items-center justify-center p-4">
-          <div className="relative bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-2xl p-2 max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-zoom-in">
-            <button
-              type="button"
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121d33] text-slate-800 dark:text-slate-200 flex items-center justify-center hover:scale-105 active:scale-95 shadow-md transition-transform"
-              title="Close Preview"
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
-            <div className="overflow-auto max-h-[80vh] rounded-lg">
-              <img src={previewImage} alt="Payment Screenshot Full Preview" className="max-w-full h-auto object-contain" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

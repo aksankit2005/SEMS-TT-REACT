@@ -73,11 +73,11 @@ export const Home = () => {
             {/* Combined Stats Grid overlay */}
             <div className="grid grid-cols-3 gap-3 max-w-md pt-2">
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
-                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">₹100</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">₹1</span>
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Singles Entry</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
-                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">₹150</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">₹2</span>
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Doubles Entry</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
