@@ -22,8 +22,18 @@ export const Footer = () => {
             className="flex items-center gap-2 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
           >
             <i className="fa-solid fa-envelope"></i>
-            <span>raipravee238@gmail.com</span>
+            <span>raipraveen238@gmail.com</span>
+
           </a>
+          <a
+            href="mailto:sports@mpgi.edu.in"
+            className="flex items-center gap-2 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+          >
+            <i className="fa-solid fa-envelope"></i>
+            <span>sports@mpgi.edu.in</span>
+
+          </a>
+
 
           {/* Instagram Link */}
           <a
