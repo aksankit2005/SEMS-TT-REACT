@@ -458,55 +458,6 @@ export const Register = () => {
                   {errors.aadhaarNumber && <span className="text-red-500 text-xs font-semibold">{errors.aadhaarNumber}</span>}
                 </div>
 
-                {/* College Name Dropdown */}
-                <div className="flex flex-col gap-1.5 text-left">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    College Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
-                    <i className="fa-solid fa-school absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                    <select
-                      name="collegeName"
-                      value={formData.collegeName}
-                      onChange={handleInputChange}
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.collegeName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
-                    >
-                      <option value="" disabled>Select College</option>
-                      <option value="MPEC">MPEC</option>
-                      <option value="MIPS">MIPS</option>
-                      <option value="MPCPS (KN142)">MPCPS (KN142)</option>
-                      <option value="MPCP">MPCP</option>
-                      <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
-                      <option value="MPDC">MPDC</option>
-                      <option value="MPCN & PS">MPCN & PS</option>
-                      <option value="MPAMC">MPAMC</option>
-                      <option value="MPCAMS">MPCAMS</option>
-                    </select>
-                  </div>
-                  {errors.collegeName && <span className="text-red-500 text-xs font-semibold">{errors.collegeName}</span>}
-                </div>
-
-                {/* Course */}
-                <div className="flex flex-col gap-1.5 text-left sm:col-span-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Course <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative flex items-center">
-                    <i className="fa-solid fa-graduation-cap absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                    <input
-                      type="text"
-                      name="course"
-                      value={formData.course}
-                      onChange={handleInputChange}
-                      placeholder="e.g. B.Tech Computer Science"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                        }`}
-                    />
-                  </div>
-                  {errors.course && <span className="text-red-500 text-xs font-semibold">{errors.course}</span>}
-                </div>
-
                 {/* Year Dropdown */}
                 <div className="flex flex-col gap-1.5 text-left">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -594,6 +545,65 @@ export const Register = () => {
                   </div>
                   {errors.emailAddress && <span className="text-red-500 text-xs font-semibold">{errors.emailAddress}</span>}
                 </div>
+
+                {/* College Name Dropdown */}
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    College Name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
+                    <i className="fa-solid fa-school absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
+                    <select
+                      name="collegeName"
+                      value={formData.collegeName}
+                      onChange={handleInputChange}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.collegeName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
+                    >
+                      <option value="" disabled>Select College</option>
+                      <option value="MPEC">MPEC</option>
+                      <option value="MIPS">MIPS</option>
+                      <option value="MPCPS (KN142)">MPCPS (KN142)</option>
+                      <option value="MPCP">MPCP</option>
+                      <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
+                      <option value="MPDC">MPDC</option>
+                      <option value="MPCN & PS">MPCN & PS</option>
+                      <option value="MPAMC">MPAMC</option>
+                      <option value="MPCAMS">MPCAMS</option>
+                    </select>
+                  </div>
+                  {errors.collegeName && <span className="text-red-500 text-xs font-semibold">{errors.collegeName}</span>}
+                </div>
+
+                {/* Course */}
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Course <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
+                    <i className="fa-solid fa-graduation-cap absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
+                    <select
+                      name="course"
+                      value={formData.course}
+                      onChange={handleInputChange}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
+                    >
+                      <option value="" disabled>Select Course</option>
+                      <option value="B.TECH.">B.TECH.</option>
+                      <option value="BBA">BBA</option>
+                      <option value="BCA">BCA</option>
+                      <option value="MCA">MCA</option>
+                      <option value="MBA">MBA</option>
+                      <option value="B.PHARMA">B.PHARMA</option>
+                      <option value="D.PHARMA">D.PHARMA</option>
+                      <option value="DENTAL">DENTAL</option>
+                      <option value="AYURVEDA">AYURVEDA</option>
+                      <option value="Nursing">Nursing</option>
+                    </select>
+                  </div>
+                  {errors.course && <span className="text-red-500 text-xs font-semibold">{errors.course}</span>}
+                </div>
               </div>
             </div>
 
@@ -669,55 +679,6 @@ export const Register = () => {
                     {errors.partnerAadhaar && <span className="text-red-500 text-xs font-semibold">{errors.partnerAadhaar}</span>}
                   </div>
 
-                  {/* Partner College Name Dropdown */}
-                  <div className="flex flex-col gap-1.5 text-left">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Partner College Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
-                      <i className="fa-solid fa-school absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                      <select
-                        name="partnerCollege"
-                        value={formData.partnerCollege}
-                        onChange={handleInputChange}
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                          }`}
-                      >
-                        <option value="" disabled>Select College</option>
-                        <option value="MPEC">MPEC</option>
-                        <option value="MIPS">MIPS</option>
-                        <option value="MPCPS (KN142)">MPCPS (KN142)</option>
-                        <option value="MPCP">MPCP</option>
-                        <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
-                        <option value="MPDC">MPDC</option>
-                        <option value="MPCN & PS">MPCN & PS</option>
-                        <option value="MPAMC">MPAMC</option>
-                        <option value="MPCAMS">MPCAMS</option>
-                      </select>
-                    </div>
-                    {errors.partnerCollege && <span className="text-red-500 text-xs font-semibold">{errors.partnerCollege}</span>}
-                  </div>
-
-                  {/* Partner Course */}
-                  <div className="flex flex-col gap-1.5 text-left sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Partner Course <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <i className="fa-solid fa-graduation-cap absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                      <input
-                        type="text"
-                        name="partnerCourse"
-                        value={formData.partnerCourse}
-                        onChange={handleInputChange}
-                        placeholder="e.g. B.Tech Computer Science"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
-                          }`}
-                      />
-                    </div>
-                    {errors.partnerCourse && <span className="text-red-500 text-xs font-semibold">{errors.partnerCourse}</span>}
-                  </div>
-
                   {/* Partner Year Dropdown */}
                   <div className="flex flex-col gap-1.5 text-left">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -781,6 +742,65 @@ export const Register = () => {
                       />
                     </div>
                     {errors.partnerEmail && <span className="text-red-500 text-xs font-semibold">{errors.partnerEmail}</span>}
+                  </div>
+
+                  {/* Partner College Name Dropdown */}
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Partner College Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
+                      <i className="fa-solid fa-school absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
+                      <select
+                        name="partnerCollege"
+                        value={formData.partnerCollege}
+                        onChange={handleInputChange}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
+                      >
+                        <option value="" disabled>Select College</option>
+                        <option value="MPEC">MPEC</option>
+                        <option value="MIPS">MIPS</option>
+                        <option value="MPCPS (KN142)">MPCPS (KN142)</option>
+                        <option value="MPCP">MPCP</option>
+                        <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
+                        <option value="MPDC">MPDC</option>
+                        <option value="MPCN & PS">MPCN & PS</option>
+                        <option value="MPAMC">MPAMC</option>
+                        <option value="MPCAMS">MPCAMS</option>
+                      </select>
+                    </div>
+                    {errors.partnerCollege && <span className="text-red-500 text-xs font-semibold">{errors.partnerCollege}</span>}
+                  </div>
+
+                  {/* Partner Course */}
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Partner Course <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
+                      <i className="fa-solid fa-graduation-cap absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
+                      <select
+                        name="partnerCourse"
+                        value={formData.partnerCourse}
+                        onChange={handleInputChange}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                          }`}
+                      >
+                        <option value="" disabled>Select Course</option>
+                        <option value="B.TECH.">B.TECH.</option>
+                        <option value="BBA">BBA</option>
+                        <option value="BCA">BCA</option>
+                        <option value="MCA">MCA</option>
+                        <option value="MBA">MBA</option>
+                        <option value="B.PHARMA">B.PHARMA</option>
+                        <option value="D.PHARMA">D.PHARMA</option>
+                        <option value="DENTAL">DENTAL</option>
+                        <option value="AYURVEDA">AYURVEDA</option>
+                        <option value="Nursing">Nursing</option>
+                      </select>
+                    </div>
+                    {errors.partnerCourse && <span className="text-red-500 text-xs font-semibold">{errors.partnerCourse}</span>}
                   </div>
                 </div>
               </div>
