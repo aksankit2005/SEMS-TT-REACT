@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
-const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE;
+const ADMIN_PASSCODE = "SEMS2026";
 
 export const Admin = () => {
   const { showToast } = useToast();
 
   // Auth state
   const [passcode, setPasscode] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('sems_admin_authenticated') === 'true');
+  const [isAuthenticated, setIsAuthensticated] = useState(() => sessionStorage.getItem('sems_admin_authenticated') === 'true');
   const [loginError, setLoginError] = useState('');
 
   // Dashboard data state
@@ -378,8 +378,8 @@ export const Admin = () => {
                       </td>
                       <td className="p-4 align-top whitespace-nowrap">
                         <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md uppercase ${category === 'singles'
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                            : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
                           }`}>
                           {category || "N/A"}
                         </span>
