@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   SEMS Custom Table Tennis Paddle CSS Animations
+   ========================================================================== */
+
+.paddle-art-bg {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+}
+
+.paddle-blue-anim {
+  animation: bluePaddle 3.5s infinite ease-in-out;
+}
+
+.paddle-orange-anim {
+  animation: orangePaddle 3.5s infinite ease-in-out;
+}
+
+.ball-bounce-anim {
+  animation: ballBounce 3.5s infinite linear;
+}
+
+@keyframes bluePaddle {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  40% { transform: translate(50px, 30px) rotate(15deg); }
+  50% { transform: translate(45px, 25px) rotate(10deg); }
+}
+
+@keyframes orangePaddle {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  40% { transform: translate(-50px, -30px) rotate(-15deg); }
+  50% { transform: translate(-45px, -25px) rotate(-10deg); }
+}
+
+@keyframes ballBounce {
+  0% { top: 75px; left: 100px; }
+  40% { top: 140px; left: 170px; }
+  50% { top: 130px; left: 155px; }
+  90% { top: 185px; left: 200px; }
+  100% { top: 75px; left: 100px; }
+}
+
+/* Glassmorphism details */
+.glassmorphism {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
