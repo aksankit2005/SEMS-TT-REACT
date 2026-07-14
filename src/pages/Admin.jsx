@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
@@ -9,7 +9,7 @@ export const Admin = () => {
   
   // Auth state
   const [passcode, setPasscode] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('sems_admin_authenticated') === 'true');
   const [loginError, setLoginError] = useState('');
   
   // Dashboard data state
@@ -18,13 +18,14 @@ export const Admin = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFormat, setFilterFormat] = useState('all');
 
+
   // Authenticate login
   const handleLogin = (e) => {
     e.preventDefault();
     if (passcode.trim() === ADMIN_PASSCODE) {
+      sessionStorage.setItem('sems_admin_authenticated', 'true');
       setIsAuthenticated(true);
       setLoginError('');
-      fetchDatabase(); // Fetch data immediately after unlocking
     } else {
       setLoginError('Incorrect Access Key! Access Denied.');
       setPasscode('');
@@ -32,7 +33,7 @@ export const Admin = () => {
   };
 
   // Fetch registrations from sheet Web App
-  const fetchDatabase = async () => {
+  const fetchDatabase = useCallback(async () => {
     setLoading(true);
     try {
       const url = `${GOOGLE_SCRIPT_URL}?action=read&passcode=${ADMIN_PASSCODE}`;
@@ -56,6 +57,22 @@ export const Admin = () => {
       showToast("Error syncing registration database. Verify Google Web App deployment access.", "error");
     } finally {
       setLoading(false);
+    }
+  }, [showToast]);
+
+  // Automatically fetch database if already authenticated on mount/refresh
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDatabase();
+    }
+  }, [isAuthenticated, fetchDatabase]);
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out of the Admin Dashboard?")) {
+      sessionStorage.removeItem('sems_admin_authenticated');
+      setIsAuthenticated(false);
+      setRegistrations([]);
+      showToast("Logged out successfully.", "success");
     }
   };
 
@@ -159,7 +176,7 @@ export const Admin = () => {
   const totalCount = registrations.length;
   const singlesCount = registrations.filter(r => r.gameCategory && String(r.gameCategory).toLowerCase() === 'singles').length;
   const doublesCount = registrations.filter(r => r.gameCategory && String(r.gameCategory).toLowerCase() === 'doubles').length;
-  const totalRevenue = (singlesCount * 1) + (doublesCount * 2); // ₹1 for singles, ₹2 for doubles in test mode
+  const totalRevenue = (singlesCount * 100) + (doublesCount * 200); // ₹100 for singles, ₹200 for doubles
 
   // Authentication View
   if (!isAuthenticated) {
@@ -230,6 +247,12 @@ export const Admin = () => {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-blue-500/10 cursor-pointer"
           >
             <i className="fa-solid fa-file-excel"></i> Export CSV
+          </button>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl transition-all shadow-md hover:shadow-red-500/10 cursor-pointer"
+          >
+            <i className="fa-solid fa-right-from-bracket"></i> Logout
           </button>
         </div>
       </div>
@@ -398,7 +421,7 @@ export const Admin = () => {
                         )}
                       </td>
                       <td className="p-4 align-top whitespace-nowrap font-bold text-slate-900 dark:text-white">
-                        ₹{category === 'doubles' ? '2' : '1'}
+                        ₹{category === 'doubles' ? '200' : '100'}
                       </td>
                       <td className="p-4 align-top">
                         <div className="flex flex-col gap-0.5">

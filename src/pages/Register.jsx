@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
@@ -16,6 +16,7 @@ export const Register = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     rollNumber: '',
+    aadhaarNumber: '',
     collegeName: '',
     branch: '',
     section: '',
@@ -25,6 +26,7 @@ export const Register = () => {
     emailAddress: '',
     partnerName: '',
     partnerRollNumber: '',
+    partnerAadhaar: '',
     partnerCollege: '',
     partnerBranch: '',
     partnerSection: '',
@@ -46,7 +48,14 @@ export const Register = () => {
   // Handle Text inputs
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Numeric-only filter for Aadhaar Card Number
+    if (name === "aadhaarNumber" || name === "partnerAadhaar") {
+      const numericValue = value.replace(/\D/g, '').slice(0, 12);
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     
     // Clear validation error on change
     if (errors[name]) {
@@ -59,6 +68,7 @@ export const Register = () => {
     const tempErrors = {};
     const phonePattern = /^[6-9]\d{9}$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const aadhaarPattern = /^\d{12}$/;
 
     if (!formData.fullName.trim()) tempErrors.fullName = "Full Name is required";
     if (!formData.rollNumber.trim()) tempErrors.rollNumber = "Roll Number is required";
@@ -67,6 +77,12 @@ export const Register = () => {
     if (!formData.section.trim()) tempErrors.section = "Section is required";
     if (!formData.year) tempErrors.year = "Year of study is required";
     if (!formData.gender) tempErrors.gender = "Gender is required";
+    
+    if (!formData.aadhaarNumber.trim()) {
+      tempErrors.aadhaarNumber = "Aadhaar Card Number is required";
+    } else if (!aadhaarPattern.test(formData.aadhaarNumber.trim())) {
+      tempErrors.aadhaarNumber = "Aadhaar must be exactly 12 numeric digits";
+    }
     
     if (!formData.mobileNumber.trim()) {
       tempErrors.mobileNumber = "Mobile Number is required";
@@ -88,6 +104,12 @@ export const Register = () => {
       if (!formData.partnerBranch.trim()) tempErrors.partnerBranch = "Partner Branch is required";
       if (!formData.partnerSection.trim()) tempErrors.partnerSection = "Partner Section is required";
       if (!formData.partnerYear) tempErrors.partnerYear = "Partner Year is required";
+      
+      if (!formData.partnerAadhaar.trim()) {
+        tempErrors.partnerAadhaar = "Partner Aadhaar Card Number is required";
+      } else if (!aadhaarPattern.test(formData.partnerAadhaar.trim())) {
+        tempErrors.partnerAadhaar = "Partner Aadhaar must be exactly 12 numeric digits";
+      }
       
       if (!formData.partnerMobile.trim()) {
         tempErrors.partnerMobile = "Partner Mobile Number is required";
@@ -132,7 +154,7 @@ export const Register = () => {
     }
 
     setLoading(true);
-    const amount = gameCategory === 'doubles' ? 2 : 1;
+    const amount = gameCategory === 'doubles' ? 200 : 100;
     
     try {
       // 1. Request Razorpay Order ID from Google Apps Script Backend
@@ -196,8 +218,8 @@ export const Register = () => {
               
               // Reset state forms
               setFormData({
-                fullName: '', rollNumber: '', collegeName: '', branch: '', section: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
-                partnerName: '', partnerRollNumber: '', partnerCollege: '', partnerBranch: '', partnerSection: '', partnerYear: '', partnerMobile: '', partnerEmail: ''
+                fullName: '', rollNumber: '', aadhaarNumber: '', collegeName: '', branch: '', section: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
+                partnerName: '', partnerRollNumber: '', partnerAadhaar: '', partnerCollege: '', partnerBranch: '', partnerSection: '', partnerYear: '', partnerMobile: '', partnerEmail: ''
               });
               setCurrentStep(1);
             } else {
@@ -305,7 +327,7 @@ export const Register = () => {
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="font-outfit font-bold text-slate-900 dark:text-white">Singles</span>
-                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹1</span>
+                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹100</span>
                     </div>
                     {gameCategory === 'singles' && (
                       <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
@@ -333,7 +355,7 @@ export const Register = () => {
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="font-outfit font-bold text-slate-900 dark:text-white">Doubles</span>
-                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹2</span>
+                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹200</span>
                     </div>
                     {gameCategory === 'doubles' && (
                       <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
@@ -395,23 +417,54 @@ export const Register = () => {
                   {errors.rollNumber && <span className="text-red-500 text-xs font-semibold">{errors.rollNumber}</span>}
                 </div>
 
-                {/* College Name */}
+                {/* Aadhaar Card Number */}
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Aadhaar Card Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center">
+                    <i className="fa-solid fa-fingerprint absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
+                    <input
+                      type="text"
+                      name="aadhaarNumber"
+                      value={formData.aadhaarNumber}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 123456789012"
+                      maxLength="12"
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
+                        errors.aadhaarNumber ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                      }`}
+                    />
+                  </div>
+                  {errors.aadhaarNumber && <span className="text-red-500 text-xs font-semibold">{errors.aadhaarNumber}</span>}
+                </div>
+
+                {/* College Name Dropdown */}
                 <div className="flex flex-col gap-1.5 text-left">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                     College Name <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center">
+                  <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
                     <i className="fa-solid fa-school absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                    <input
-                      type="text"
+                    <select
                       name="collegeName"
                       value={formData.collegeName}
                       onChange={handleInputChange}
-                      placeholder="e.g. State Engineering College"
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
                         errors.collegeName ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                       }`}
-                    />
+                    >
+                      <option value="" disabled>Select College</option>
+                      <option value="MPEC">MPEC</option>
+                      <option value="MIPS">MIPS</option>
+                      <option value="MPCPS (KN142)">MPCPS (KN142)</option>
+                      <option value="MPCP">MPCP</option>
+                      <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
+                      <option value="MPDC">MPDC</option>
+                      <option value="MPCN & PS">MPCN & PS</option>
+                      <option value="MPAMC">MPAMC</option>
+                      <option value="MPCAMS">MPCAMS</option>
+                    </select>
                   </div>
                   {errors.collegeName && <span className="text-red-500 text-xs font-semibold">{errors.collegeName}</span>}
                 </div>
@@ -458,7 +511,7 @@ export const Register = () => {
                   {errors.section && <span className="text-red-500 text-xs font-semibold">{errors.section}</span>}
                 </div>
 
-                {/* Year */}
+                {/* Year Dropdown */}
                 <div className="flex flex-col gap-1.5 text-left">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Year of Study <span className="text-red-500">*</span>
@@ -478,6 +531,7 @@ export const Register = () => {
                       <option value="2nd Year">2nd Year</option>
                       <option value="3rd Year">3rd Year</option>
                       <option value="4th Year">4th Year</option>
+                      <option value="5th Year">5th Year</option>
                     </select>
                   </div>
                   {errors.year && <span className="text-red-500 text-xs font-semibold">{errors.year}</span>}
@@ -551,7 +605,7 @@ export const Register = () => {
               </div>
             </div>
 
-            {/* STEP 1.5: Doubles Team Member Details */}
+            {/* STEP 1.5: Doubles Team Partner Details */}
             {gameCategory === 'doubles' && (
               <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6 mt-6 animate-slide-down">
                 <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
@@ -604,23 +658,54 @@ export const Register = () => {
                     {errors.partnerRollNumber && <span className="text-red-500 text-xs font-semibold">{errors.partnerRollNumber}</span>}
                   </div>
 
-                  {/* Partner College */}
+                  {/* Partner Aadhaar Card Number */}
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Partner Aadhaar Card Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <i className="fa-solid fa-fingerprint absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
+                      <input
+                        type="text"
+                        name="partnerAadhaar"
+                        value={formData.partnerAadhaar}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 987654321098"
+                        maxLength="12"
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
+                          errors.partnerAadhaar ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        }`}
+                      />
+                    </div>
+                    {errors.partnerAadhaar && <span className="text-red-500 text-xs font-semibold">{errors.partnerAadhaar}</span>}
+                  </div>
+
+                  {/* Partner College Name Dropdown */}
                   <div className="flex flex-col gap-1.5 text-left">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Partner College Name <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative flex items-center">
+                    <div className="relative flex items-center after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:text-slate-400 after:pointer-events-none">
                       <i className="fa-solid fa-school absolute left-4 text-slate-400 dark:text-slate-500 text-sm"></i>
-                      <input
-                        type="text"
+                      <select
                         name="partnerCollege"
                         value={formData.partnerCollege}
                         onChange={handleInputChange}
-                        placeholder="e.g. State Engineering College"
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${
                           errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                         }`}
-                      />
+                      >
+                        <option value="" disabled>Select College</option>
+                        <option value="MPEC">MPEC</option>
+                        <option value="MIPS">MIPS</option>
+                        <option value="MPCPS (KN142)">MPCPS (KN142)</option>
+                        <option value="MPCP">MPCP</option>
+                        <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
+                        <option value="MPDC">MPDC</option>
+                        <option value="MPCN & PS">MPCN & PS</option>
+                        <option value="MPAMC">MPAMC</option>
+                        <option value="MPCAMS">MPCAMS</option>
+                      </select>
                     </div>
                     {errors.partnerCollege && <span className="text-red-500 text-xs font-semibold">{errors.partnerCollege}</span>}
                   </div>
@@ -667,7 +752,7 @@ export const Register = () => {
                     {errors.partnerSection && <span className="text-red-500 text-xs font-semibold">{errors.partnerSection}</span>}
                   </div>
 
-                  {/* Partner Year */}
+                  {/* Partner Year Dropdown */}
                   <div className="flex flex-col gap-1.5 text-left">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Partner Year <span className="text-red-500">*</span>
@@ -687,6 +772,7 @@ export const Register = () => {
                         <option value="2nd Year">2nd Year</option>
                         <option value="3rd Year">3rd Year</option>
                         <option value="4th Year">4th Year</option>
+                        <option value="5th Year">5th Year</option>
                       </select>
                     </div>
                     {errors.partnerYear && <span className="text-red-500 text-xs font-semibold">{errors.partnerYear}</span>}
@@ -766,7 +852,7 @@ export const Register = () => {
                 <div className="flex justify-between items-center border-b border-dashed border-slate-200 dark:border-slate-800 pb-4 mb-6">
                   <span className="font-outfit font-bold text-slate-950 dark:text-slate-100 text-lg">Entry Fee Amount</span>
                   <span className="font-outfit text-3xl font-extrabold text-green-500 dark:text-green-400">
-                    ₹{gameCategory === 'doubles' ? '2' : '1'}
+                    ₹{gameCategory === 'doubles' ? '200' : '100'}
                   </span>
                 </div>
 
@@ -845,3 +931,4 @@ export const Register = () => {
     </div>
   );
 };
+
