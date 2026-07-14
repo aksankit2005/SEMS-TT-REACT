@@ -700,7 +700,7 @@ export const Register = () => {
                         name="partnerCollege"
                         value={formData.partnerCollege}
                         onChange={handleInputChange}
-                        placeholder="e.g. State Engineering College"
+                        placeholder="e.g. College Name"
                         className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all ${
                           errors.partnerCollege ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                         }`}
