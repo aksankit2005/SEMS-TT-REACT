@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
+import { collegeCourses } from '../constants/collegeCourses';
 
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
 // Replace this with your actual Razorpay Key ID locally in this file!
@@ -52,6 +53,12 @@ export const Register = () => {
     if (name === "aadhaarNumber" || name === "partnerAadhaar") {
       const numericValue = value.replace(/\D/g, '').slice(0, 12);
       setFormData((prev) => ({ ...prev, [name]: numericValue }));
+    } else if (name === "collegeName") {
+      // If college changes, reset course dropdown selection
+      setFormData((prev) => ({ ...prev, collegeName: value, course: '' }));
+    } else if (name === "partnerCollege") {
+      // If partner college changes, reset partner course dropdown selection
+      setFormData((prev) => ({ ...prev, partnerCollege: value, partnerCourse: '' }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -61,7 +68,9 @@ export const Register = () => {
       setErrors((prev) => ({
         ...prev,
         collegeName: null,
-        partnerCollege: null
+        partnerCollege: null,
+        course: null,
+        partnerCourse: null
       }));
     } else if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
@@ -576,9 +585,9 @@ export const Register = () => {
                       <option value="MIPS">MIPS</option>
                       <option value="MPCPS (KN142)">MPCPS (KN142)</option>
                       <option value="MPCP">MPCP</option>
-                      <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
+                      <option value="MPCPS (BPharmacy)">MPCPS (BPharmacy)</option>
                       <option value="MPDC">MPDC</option>
-                      <option value="MPCN & PS">MPCN & PS</option>
+                      <option value="MPCN&PS">MPCN&PS</option>
                       <option value="MPAMC">MPAMC</option>
                       <option value="MPCAMS">MPCAMS</option>
                     </select>
@@ -597,20 +606,14 @@ export const Register = () => {
                       name="course"
                       value={formData.course}
                       onChange={handleInputChange}
-                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                      disabled={!formData.collegeName}
+                      className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${errors.course ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                         }`}
                     >
-                      <option value="" disabled>Select Course</option>
-                      <option value="B.TECH.">B.TECH.</option>
-                      <option value="BBA">BBA</option>
-                      <option value="BCA">BCA</option>
-                      <option value="MCA">MCA</option>
-                      <option value="MBA">MBA</option>
-                      <option value="B.PHARMA">B.PHARMA</option>
-                      <option value="D.PHARMA">D.PHARMA</option>
-                      <option value="DENTAL">DENTAL</option>
-                      <option value="AYURVEDA">AYURVEDA</option>
-                      <option value="Nursing">Nursing</option>
+                      <option value="" disabled>{formData.collegeName ? "Select Course" : "Select College First"}</option>
+                      {formData.collegeName && collegeCourses[formData.collegeName] && collegeCourses[formData.collegeName].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
                   {errors.course && <span className="text-red-500 text-xs font-semibold">{errors.course}</span>}
@@ -774,9 +777,9 @@ export const Register = () => {
                         <option value="MIPS">MIPS</option>
                         <option value="MPCPS (KN142)">MPCPS (KN142)</option>
                         <option value="MPCP">MPCP</option>
-                        <option value="MPCPS Pharmacy">MPCPS Pharmacy</option>
+                        <option value="MPCPS (BPharmacy)">MPCPS (BPharmacy)</option>
                         <option value="MPDC">MPDC</option>
-                        <option value="MPCN & PS">MPCN & PS</option>
+                        <option value="MPCN&PS">MPCN&PS</option>
                         <option value="MPAMC">MPAMC</option>
                         <option value="MPCAMS">MPCAMS</option>
                       </select>
@@ -795,20 +798,14 @@ export const Register = () => {
                         name="partnerCourse"
                         value={formData.partnerCourse}
                         onChange={handleInputChange}
-                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer ${errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
+                        disabled={!formData.partnerCollege}
+                        className={`w-full bg-slate-50 dark:bg-[#1a2744] border rounded-xl py-3 pl-11 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${errors.partnerCourse ? 'border-red-500 bg-red-500/5' : 'border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33]'
                           }`}
                       >
-                        <option value="" disabled>Select Course</option>
-                        <option value="B.TECH.">B.TECH.</option>
-                        <option value="BBA">BBA</option>
-                        <option value="BCA">BCA</option>
-                        <option value="MCA">MCA</option>
-                        <option value="MBA">MBA</option>
-                        <option value="B.PHARMA">B.PHARMA</option>
-                        <option value="D.PHARMA">D.PHARMA</option>
-                        <option value="DENTAL">DENTAL</option>
-                        <option value="AYURVEDA">AYURVEDA</option>
-                        <option value="Nursing">Nursing</option>
+                        <option value="" disabled>{formData.partnerCollege ? "Select Course" : "Select College First"}</option>
+                        {formData.partnerCollege && collegeCourses[formData.partnerCollege] && collegeCourses[formData.partnerCollege].map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
                       </select>
                     </div>
                     {errors.partnerCourse && <span className="text-red-500 text-xs font-semibold">{errors.partnerCourse}</span>}

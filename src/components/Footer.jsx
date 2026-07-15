@@ -33,6 +33,14 @@ export const Footer = () => {
             <span>sports@mpgi.edu.in</span>
 
           </a>
+          <a
+            href="tel:+919119705860"
+            className="flex items-center gap-2 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+          >
+            <i className="fa-solid fa-phone"></i>
+            <span>9119705860</span>
+
+          </a>
 
 
           {/* Instagram Link */}
