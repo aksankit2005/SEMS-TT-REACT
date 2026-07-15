@@ -35,6 +35,7 @@ export const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [declarationAccepted, setDeclarationAccepted] = useState(false);
 
   const [statusModal, setStatusModal] = useState({
     visible: false,
@@ -154,6 +155,11 @@ export const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!declarationAccepted) {
+      showToast("Please accept the declaration before proceeding to payment.", "error");
+      return;
+    }
+
     if (RAZORPAY_KEY_ID === "YOUR_RAZORPAY_KEY_ID") {
       showToast("Razorpay Key ID is not configured. Please add your Key ID inside Register.jsx.", "error");
       return;
@@ -172,7 +178,9 @@ export const Register = () => {
         body: JSON.stringify({
           action: "createOrder",
           amount: amount,
-          rollNumber: formData.rollNumber
+          rollNumber: formData.rollNumber,
+          declarationAccepted: true,
+          declarationTimestamp: new Date().toISOString()
         })
       });
 
@@ -211,6 +219,8 @@ export const Register = () => {
                 partnerSection: "",
                 gameCategory: gameCategory,
                 action: "register",
+                declarationAccepted: true,
+                declarationTimestamp: new Date().toISOString(),
                 razorpayOrderId: response.razorpay_order_id,
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpaySignature: response.razorpay_signature
@@ -231,6 +241,7 @@ export const Register = () => {
                 fullName: '', rollNumber: '', aadhaarNumber: '', collegeName: '', course: '', year: '', gender: '', mobileNumber: '', emailAddress: '',
                 partnerName: '', partnerRollNumber: '', partnerAadhaar: '', partnerCollege: '', partnerCourse: '', partnerYear: '', partnerMobile: '', partnerEmail: ''
               });
+              setDeclarationAccepted(false);
               setCurrentStep(1);
             } else {
               throw new Error(verifyResult.message || "Payment signature verification failed.");
@@ -852,7 +863,64 @@ export const Register = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Card 1: Verification & Approval */}
+              <div className="bg-blue-50/50 dark:bg-blue-950/10 border-2 border-blue-200 dark:border-blue-900/40 rounded-2xl p-5 mb-5 text-left flex gap-4 items-start">
+                <div className="text-blue-500 dark:text-blue-400 text-xl mt-0.5 flex-shrink-0">
+                  <i className="fa-solid fa-circle-info"></i>
+                </div>
+                <div>
+                  <h4 className="font-outfit font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wider mb-2">
+                    Verification & Approval
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    After submission of the registration form, the participant's details will be forwarded to the respective Department/College for verification. Registration will be considered successful only after approval from the Department/College.
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+                    If the Department/College raises any objection regarding the participant's eligibility or any other relevant matter, the registration will be rejected. In such cases, the registration fee, if already paid, will be refunded to the participant.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 2: Declaration */}
+              <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-5 mb-6 text-left transition-all duration-300 shadow-sm flex flex-col gap-4">
+                <div className="flex gap-4 items-start">
+                  <div className="text-indigo-500 dark:text-indigo-400 text-xl mt-0.5 flex-shrink-0">
+                    <i className="fa-solid fa-user-shield"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-outfit font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wider mb-2">
+                      Declaration
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      I hereby declare that the information provided by me in this registration form is true and correct to the best of my knowledge. I agree to abide by all the rules and regulations of the sports event. If I am found guilty of providing false information or engaging in any act of indiscipline or misconduct, I understand that I may be disqualified, and I agree to accept the decision of the Organizing Committee as final.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-1 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="declaration-checkbox"
+                    checked={declarationAccepted}
+                    onChange={(e) => setDeclarationAccepted(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="declaration-checkbox" className="text-xs font-semibold text-slate-700 dark:text-slate-300 select-none cursor-pointer">
+                    I have read, understood, and agree to the above declaration and verification policy. <span className="text-red-500">*</span>
+                  </label>
+                </div>
+              </div>
             </div>
+
+            {/* Helper Message / Tooltip */}
+            {!declarationAccepted && (
+              <div className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-2 text-center animate-pulse">
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1.5">
+                  <i className="fa-solid fa-triangle-exclamation"></i> Please accept the declaration before proceeding to payment.
+                </span>
+              </div>
+            )}
 
             {/* Back & Submit buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -866,8 +934,12 @@ export const Register = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={loading}
-                className="w-full sm:w-2/3 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white font-semibold text-lg py-4 rounded-xl shadow-lg hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                disabled={!declarationAccepted || loading}
+                className={`w-full sm:w-2/3 font-semibold text-lg py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  declarationAccepted
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white hover:brightness-110 active:scale-[0.99]"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                }`}
               >
                 {loading ? (
                   <>
