@@ -60,18 +60,6 @@ export const Navbar = () => {
             >
               Register
             </NavLink>
-            <NavLink
-              to="/admin"
-              className={({ isActive }) =>
-                `font-medium text-sm px-3.5 py-2 rounded-md transition-colors ${
-                  isActive
-                    ? 'text-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400'
-                }`
-              }
-            >
-              Admin Dashboard
-            </NavLink>
           </nav>
 
           {/* Actions (Theme toggle & Mobile menu button) */}
@@ -141,19 +129,6 @@ export const Navbar = () => {
             }
           >
             Register
-          </NavLink>
-          <NavLink
-            to="/admin"
-            onClick={() => setMobileMenuOpen(false)}
-            className={({ isActive }) =>
-              `block font-medium text-sm px-4 py-2.5 rounded-md transition-colors ${
-                isActive
-                  ? 'text-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400'
-              }`
-            }
-          >
-            Admin Dashboard
           </NavLink>
         </nav>
       )}

@@ -1,9 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQBRLpFgY0Q9QyDjntvbVdRmcxtmuG_lZI86WhtMFT6QhpPhfRequlQ_I4uZm3vEnhaA/exec";
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return "";
+  const str = String(timeStr).trim();
+  if (str.includes("T")) {
+    try {
+      const date = new Date(str);
+      if (isNaN(date.getTime())) return str;
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (e) {
+      return str;
+    }
+  }
+  return str;
+};
+
 export const Home = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [schedules, setSchedules] = useState([]);
+  const [liveMatch, setLiveMatch] = useState(null);
+
+  const fetchLiveHub = async () => {
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchedules`);
+      const json = await response.json();
+      if (json.status === "success") {
+        const list = json.data || [];
+        setSchedules(list);
+        const live = list.find(m => String(m.status).toLowerCase() === 'live');
+        setLiveMatch(live || null);
+      }
+    } catch (err) {
+      console.error("Failed to poll live scores: ", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveHub();
+    const timer = setInterval(fetchLiveHub, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Slide definitions with images AND per-slide content
   const slides = [
@@ -13,7 +57,7 @@ export const Home = () => {
     },
 
     {
-      img: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?q=80&w=1600&auto=format&fit=crop",
+      img: "https://images.unsplash.com/photo-1586165368502-1bad197a6461?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Y2hlc3N8ZW58MHx8MHx8fDA%3D",
       type: "chess"
     }
   ];
@@ -49,7 +93,7 @@ export const Home = () => {
             <img
               src={slide.img}
               alt={`Slide ${index + 1}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain md:object-cover"
             />
             {/* Dark Overlay for Text Contrast */}
             <div className={`absolute inset-0 ${slide.type === 'chess' ? 'bg-black/70 md:bg-black/60' : 'bg-black/65 md:bg-black/55'}`}></div>
@@ -190,29 +234,50 @@ export const Home = () => {
         <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-lg flex flex-col justify-between transition-colors duration-300 min-h-[320px]">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-4 mb-4">
             <h3 className="font-outfit text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-600"></span>
+              <span className={`w-2 h-2 rounded-full ${liveMatch ? 'bg-red-500 animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`}></span>
               Live Match Scoreboard
             </h3>
             <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-              0 Active Matches
+              {liveMatch ? '1 Active Match' : '0 Active Matches'}
             </span>
           </div>
 
-          {/* Empty State: No Live Matches */}
-          <div className="flex-grow flex flex-col items-center justify-center py-6">
-            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-xl mb-3">
-              <i className="fa-solid fa-table-tennis-paddle-ball text-blue-500/40"></i>
+          {liveMatch ? (
+            <div className="flex-grow flex flex-col justify-center py-4 text-center">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-500 dark:text-blue-400 mb-2">
+                {liveMatch.category} · {liveMatch.tableNumber}
+              </span>
+              <div className="flex items-center justify-around gap-2 my-2 select-none">
+                <div className="w-5/12 text-right">
+                  <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch.player1Name}</h4>
+                  <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch.player1Score}</div>
+                </div>
+                <div className="text-xs font-bold text-slate-400 px-2">VS</div>
+                <div className="w-5/12 text-left">
+                  <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch.player2Name}</h4>
+                  <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch.player2Score}</div>
+                </div>
+              </div>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-4"><i className="fa-solid fa-clock"></i> Match Slot: {formatTime(liveMatch.matchTime)}</span>
             </div>
-            <h4 className="font-outfit text-sm font-bold text-slate-900 dark:text-white mb-1">
-              No Live Matches
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              There are currently no live matches.
-            </p>
-          </div>
+          ) : (
+            /* Empty State: No Live Matches */
+            <div className="flex-grow flex flex-col items-center justify-center py-6">
+              <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-xl mb-3">
+                <i className="fa-solid fa-table-tennis-paddle-ball text-blue-500/40"></i>
+              </div>
+              <h4 className="font-outfit text-sm font-bold text-slate-900 dark:text-white mb-1">
+                No Live Matches
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                There are currently no live matches.
+              </p>
+            </div>
+          )}
 
-          <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 mt-4 text-left text-[10px] text-slate-400">
+          <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 mt-4 text-left text-[10px] text-slate-400 flex justify-between">
             <span>Standby Mode</span>
+            <button onClick={() => navigate('/live')} className="text-blue-500 hover:underline font-bold text-[10px]">Open Full Hub</button>
           </div>
         </div>
 
@@ -226,18 +291,37 @@ export const Home = () => {
             <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">Schedules</span>
           </div>
 
-          {/* Empty State: No Scheduled Matches */}
-          <div className="flex-grow flex flex-col items-center justify-center py-6">
-            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-lg mb-3">
-              <i className="fa-regular fa-calendar-xmark text-blue-500/40"></i>
+          {schedules.filter(m => String(m.status).toLowerCase() === 'upcoming').length > 0 ? (
+            <div className="flex-grow space-y-3 py-2 text-left">
+              {schedules.filter(m => String(m.status).toLowerCase() === 'upcoming').slice(0, 2).map((m) => (
+                <div key={m.matchId} className="p-3 border border-slate-100 dark:border-slate-850 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 rounded">
+                      {m.category}
+                    </span>
+                    <h5 className="font-bold text-slate-850 dark:text-slate-100 mt-1">{m.player1Name} vs {m.player2Name}</h5>
+                  </div>
+                  <div className="text-right text-[10px] text-slate-400 font-semibold">
+                    <div>{m.tableNumber}</div>
+                    <div>{formatTime(m.matchTime)}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h4 className="font-outfit text-sm font-bold text-slate-900 dark:text-white mb-1">
-              No Matches Scheduled Yet
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Upcoming matches will appear here.
-            </p>
-          </div>
+          ) : (
+            /* Empty State: No Scheduled Matches */
+            <div className="flex-grow flex flex-col items-center justify-center py-6">
+              <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-lg mb-3">
+                <i className="fa-regular fa-calendar-xmark text-blue-500/40"></i>
+              </div>
+              <h4 className="font-outfit text-sm font-bold text-slate-900 dark:text-white mb-1">
+                No Matches Scheduled Yet
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Upcoming matches will appear here.
+              </p>
+            </div>
+          )}
 
           <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 mt-4 text-right">
             <button

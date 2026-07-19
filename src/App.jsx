@@ -7,6 +7,8 @@ import { Home } from './pages/Home';
 import { Register } from './pages/Register';
 import { Admin } from './pages/Admin';
 import { Live } from './pages/Live';
+import { CoordinatorLogin } from './pages/CoordinatorLogin';
+import { CoordinatorDashboard } from './pages/CoordinatorDashboard';
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/live" element={<Live />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/coordinator/login" element={<CoordinatorLogin />} />
+              <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
