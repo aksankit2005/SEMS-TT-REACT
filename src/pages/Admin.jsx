@@ -100,7 +100,7 @@ export const Admin = () => {
     }
 
     const headers = [
-      "Timestamp", "Category",
+      "Timestamp", "Sport", "Category",
       "Primary Name", "Primary Roll No", "Primary College", "Primary Course", "Primary Year", "Primary Gender", "Primary Mobile", "Primary Email",
       "Partner Name", "Partner Roll No", "Partner College", "Partner Course", "Partner Year", "Partner Mobile", "Partner Email",
       "Transaction ID", "Status"
@@ -112,6 +112,7 @@ export const Admin = () => {
     registrations.forEach(row => {
       const line = [
         row.timestamp || "",
+        row.sport || "Table Tennis",
         row.gameCategory || "",
         row.fullName || "",
         row.rollNumber || "",
@@ -342,6 +343,7 @@ export const Admin = () => {
             <thead>
               <tr className="bg-slate-50 dark:bg-[#1a2744]/40 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-bold">
                 <th className="p-4 whitespace-nowrap">Timestamp</th>
+                <th className="p-4 whitespace-nowrap">Sport</th>
                 <th className="p-4 whitespace-nowrap">Category</th>
                 <th className="p-4 whitespace-nowrap">Player Details</th>
                 <th className="p-4 whitespace-nowrap">Team Partner Details</th>
@@ -353,7 +355,7 @@ export const Admin = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="p-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan="8" className="p-12 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2 font-semibold">
                       <i className="fa-solid fa-circle-notch fa-spin text-blue-500 text-xl"></i>
                       Fetching records from database...
@@ -362,7 +364,7 @@ export const Admin = () => {
                 </tr>
               ) : filteredRegistrations.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-12 text-center text-slate-500 dark:text-slate-400 font-semibold">
+                  <td colSpan="8" className="p-12 text-center text-slate-500 dark:text-slate-400 font-semibold">
                     No registrations found matching the filters.
                   </td>
                 </tr>
@@ -375,6 +377,9 @@ export const Admin = () => {
                     <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
                       <td className="p-4 align-top whitespace-nowrap font-medium text-slate-600 dark:text-slate-400">
                         {formatTimestamp(row.timestamp)}
+                      </td>
+                      <td className="p-4 align-top whitespace-nowrap font-bold text-slate-900 dark:text-white">
+                        {row.sport || "Table Tennis"}
                       </td>
                       <td className="p-4 align-top whitespace-nowrap">
                         <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md uppercase ${category === 'singles'

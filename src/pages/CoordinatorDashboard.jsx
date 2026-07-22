@@ -778,6 +778,7 @@ export const CoordinatorDashboard = () => {
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                     <th className="pb-3 text-left">Full Name</th>
                     <th className="pb-3 text-left">Roll Number</th>
+                    <th className="pb-3 text-left">Sport</th>
                     <th className="pb-3 text-left">College & Course</th>
                     <th className="pb-3 text-left">Format</th>
                     <th className="pb-3 text-left">Contact Info</th>
@@ -788,6 +789,7 @@ export const CoordinatorDashboard = () => {
                     <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                       <td className="py-3 font-bold text-slate-900 dark:text-white">{row.fullName}</td>
                       <td className="py-3 font-mono font-bold text-slate-800 dark:text-slate-200">{row.rollNumber}</td>
+                      <td className="py-3 text-slate-900 dark:text-white font-bold">{row.sport || "Table Tennis"}</td>
                       <td className="py-3 text-slate-500">{row.collegeName} | {row.course}</td>
                       <td className="py-3">
                         <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-300">
@@ -800,7 +802,7 @@ export const CoordinatorDashboard = () => {
 
                   {filteredRegs.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="py-8 text-center text-slate-400 italic">No participants match filters.</td>
+                      <td colSpan="6" className="py-8 text-center text-slate-400 italic">No participants match filters.</td>
                     </tr>
                   )}
                 </tbody>

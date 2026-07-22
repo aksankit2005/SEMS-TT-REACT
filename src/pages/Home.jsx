@@ -107,9 +107,9 @@ export const Home = () => {
               🏓 Registration Open · 2026
             </span>
             <h1 className="font-outfit text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
-              Ready to Serve, Smash,{' '}
+              Table Tennis  {' '}
               <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                and Succeed?
+                Tournament
               </span>
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
@@ -125,7 +125,7 @@ export const Home = () => {
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Doubles Entry</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
-                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">22 July</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">24 July</span>
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Reg. Deadline</span>
               </div>
             </div>
@@ -153,7 +153,7 @@ export const Home = () => {
               ♟️ Coming Soon · 2026
             </span>
             <h1 className="font-outfit text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
-              Strategy. Focus.{' '}
+              Chess Tournament{' '}
               <span className="bg-gradient-to-r from-yellow-400 to-amber-400 bg-clip-text text-transparent">
                 Victory.
               </span>

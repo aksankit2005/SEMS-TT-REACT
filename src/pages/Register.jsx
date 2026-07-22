@@ -13,6 +13,7 @@ export const Register = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   // State variables
+  const [selectedSport, setSelectedSport] = useState('Table Tennis');
   const [gameCategory, setGameCategory] = useState('singles');
   const [formData, setFormData] = useState({
     fullName: '',
@@ -188,6 +189,7 @@ export const Register = () => {
           action: "createOrder",
           amount: amount,
           rollNumber: formData.rollNumber,
+          sport: selectedSport,
           declarationAccepted: true,
           declarationTimestamp: new Date().toISOString()
         })
@@ -222,6 +224,7 @@ export const Register = () => {
               },
               body: JSON.stringify({
                 ...formData,
+                sport: selectedSport,
                 branch: formData.course,
                 partnerBranch: formData.partnerCourse,
                 section: "",
@@ -296,7 +299,7 @@ export const Register = () => {
       <div className="mb-8 p-4 bg-red-500/10 dark:bg-red-500/5 border-l-4 border-l-red-500 border border-slate-200 dark:border-slate-800 rounded-r-2xl rounded-l-md flex items-center gap-3 text-[#0f172a] dark:text-[#f8fafc] animate-fade-in">
         <i className="fa-solid fa-triangle-exclamation text-red-500 dark:text-red-400 text-lg shrink-0"></i>
         <span className="text-sm font-semibold">
-          Registration closes on 22 July. No registrations will be accepted after the deadline.
+          Registration closes on 24 July (11:59 PM). No registrations will be accepted after the deadline.
         </span>
       </div>
 
@@ -336,7 +339,46 @@ export const Register = () => {
         {/* STEP 1: Details Form */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-fade-in">
-            {/* Category selection */}
+            {/* Sport selection */}
+            <div>
+              <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
+                Select Sport
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                Choose the sport you want to register for
+              </p>
+              <div className="relative">
+                <i className="fa-solid fa-gamepad absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm"></i>
+                <select
+                  name="sport"
+                  value={selectedSport}
+                  onChange={(e) => setSelectedSport(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#1a2744] border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-11 pr-10 text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33] text-slate-900 dark:text-white appearance-none cursor-pointer"
+                >
+                  <option value="Table Tennis">Table Tennis</option>
+                  <option value="Chess">Chess</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <i className="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+              </div>
+            </div>
+
+            {selectedSport === 'Chess' ? (
+              <div className="p-8 bg-yellow-500/10 dark:bg-yellow-500/5 border border-yellow-400/30 rounded-2xl text-center space-y-4 animate-fade-in mt-6">
+                <div className="w-16 h-16 mx-auto rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-3xl">
+                  <i className="fa-solid fa-chess"></i>
+                </div>
+                <h4 className="font-outfit font-bold text-slate-900 dark:text-white text-lg">
+                  Chess Registration Coming Soon!
+                </h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Registrations for the Chess Tournament are currently closed and will open soon. Please stay tuned for updates! Currently, registrations are only active for Table Tennis.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Category selection */}
             <div>
               <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
                 Select Format
@@ -824,8 +866,10 @@ export const Register = () => {
                 Next: Proceed to Payment <i className="fa-solid fa-arrow-right"></i>
               </button>
             </div>
-          </div>
+          </>
         )}
+      </div>
+    )}
 
         {/* STEP 2: Razorpay Payment Integration */}
         {currentStep === 2 && (
