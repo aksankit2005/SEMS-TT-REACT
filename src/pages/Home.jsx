@@ -125,7 +125,7 @@ export const Home = () => {
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Doubles Entry</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
-                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">30 July</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">24 July</span>
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Reg. Deadline</span>
               </div>
             </div>
@@ -163,12 +163,13 @@ export const Home = () => {
             </p>
             <div className="grid grid-cols-3 gap-3 max-w-md pt-2">
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
-                <span className="block text-lg sm:text-xl">🎯</span>
-                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Individual Event</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">₹100</span>
+
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Registration fee</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
-                <span className="block text-lg sm:text-xl">🧠</span>
-                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Sharpen Your Mind</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">30 july</span>
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Reg. Deadline</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
                 <span className="block text-lg sm:text-xl">🏆</span>
