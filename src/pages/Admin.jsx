@@ -17,6 +17,7 @@ export const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFormat, setFilterFormat] = useState('all');
+  const [filterSport, setFilterSport] = useState('all');
 
 
   // Authenticate login
@@ -112,7 +113,7 @@ export const Admin = () => {
     registrations.forEach(row => {
       const line = [
         row.timestamp || "",
-        row.sport || "Table Tennis",
+        row.sport || row.section || "Table Tennis",
         row.gameCategory || "",
         row.fullName || "",
         row.rollNumber || "",
@@ -153,6 +154,9 @@ export const Admin = () => {
 
   // Filter & Search logic
   const filteredRegistrations = registrations.filter(row => {
+    const sport = String(row.sport || row.section || "Table Tennis").toLowerCase();
+    const matchSport = filterSport === 'all' || sport === filterSport.toLowerCase();
+
     const category = String(row.gameCategory || "").toLowerCase();
     const matchCategory = filterFormat === 'all' || category === filterFormat;
 
@@ -168,7 +172,7 @@ export const Admin = () => {
       (pRoll && pRoll.toLowerCase().includes(query)) ||
       (utrStr && utrStr.toLowerCase().includes(query));
 
-    return matchCategory && matchSearch;
+    return matchSport && matchCategory && matchSearch;
   });
 
   // Calculate Metrics
@@ -323,16 +327,32 @@ export const Admin = () => {
           />
         </div>
 
-        <div className="relative w-full sm:w-48 after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:top-[14px] after:text-slate-400 after:pointer-events-none">
-          <select
-            value={filterFormat}
-            onChange={(e) => setFilterFormat(e.target.value)}
-            className="w-full bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-4 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer"
-          >
-            <option value="all">All Formats</option>
-            <option value="singles">Singles Only</option>
-            <option value="doubles">Doubles Only</option>
-          </select>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          {/* Sport Filter */}
+          <div className="relative w-full sm:w-48 after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:top-[14px] after:text-slate-400 after:pointer-events-none">
+            <select
+              value={filterSport}
+              onChange={(e) => setFilterSport(e.target.value)}
+              className="w-full bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-4 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer"
+            >
+              <option value="all">All Sports</option>
+              <option value="Table Tennis">Table Tennis</option>
+              <option value="Chess">Chess</option>
+            </select>
+          </div>
+
+          {/* Format Filter */}
+          <div className="relative w-full sm:w-48 after:content-['\f107'] after:font-black after:font-['Font_Awesome_6_Free'] after:absolute after:right-4 after:top-[14px] after:text-slate-400 after:pointer-events-none">
+            <select
+              value={filterFormat}
+              onChange={(e) => setFilterFormat(e.target.value)}
+              className="w-full bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-4 pr-10 text-sm outline-none transition-all appearance-none cursor-pointer"
+            >
+              <option value="all">All Formats</option>
+              <option value="singles">Singles Only</option>
+              <option value="doubles">Doubles Only</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -379,7 +399,7 @@ export const Admin = () => {
                         {formatTimestamp(row.timestamp)}
                       </td>
                       <td className="p-4 align-top whitespace-nowrap font-bold text-slate-900 dark:text-white">
-                        {row.sport || "Table Tennis"}
+                        {row.sport || row.section || "Table Tennis"}
                       </td>
                       <td className="p-4 align-top whitespace-nowrap">
                         <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md uppercase ${category === 'singles'

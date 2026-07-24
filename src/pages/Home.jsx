@@ -103,8 +103,8 @@ export const Home = () => {
         {/* === TABLE TENNIS CONTENT (slides 0–3) === */}
         <div className={`absolute inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 text-left transition-opacity duration-700 ${slides[currentSlide]?.type === 'tt' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
           <div className="space-y-4 max-w-2xl mt-4 md:mt-2">
-            <span className="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-semibold text-blue-300 tracking-wide uppercase">
-              🏓 Registration Open · 2026
+            <span className="inline-block px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-xs font-semibold text-red-300 tracking-wide uppercase">
+              🏓 Registration Closed
             </span>
             <h1 className="font-outfit text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
               Table Tennis  {' '}
@@ -125,17 +125,17 @@ export const Home = () => {
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Doubles Entry</span>
               </div>
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-blue-400/30 transition-all duration-300">
-                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">24 July</span>
+                <span className="block font-outfit text-lg sm:text-xl font-bold text-blue-400">30 July</span>
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-300">Reg. Deadline</span>
               </div>
             </div>
           </div>
           <div className="flex gap-4 mb-2 md:mb-0">
             <button
-              onClick={() => navigate('/register')}
-              className="px-6 py-3 rounded-full text-white font-bold text-sm bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/20 hover:bg-white/25 dark:hover:bg-black/50 shadow-lg hover:shadow-black/20 active:scale-95 transition-all duration-300 cursor-pointer"
+              disabled
+              className="px-6 py-3 rounded-full text-slate-400 dark:text-slate-500 font-bold text-sm bg-white/5 dark:bg-black/10 backdrop-blur-md border border-white/10 shadow-lg cursor-not-allowed opacity-60"
             >
-              👉 Register Now
+              🔒 Closed
             </button>
             <button
               onClick={() => navigate('/live')}
@@ -149,8 +149,8 @@ export const Home = () => {
         {/* === CHESS CONTENT (slide 4) === */}
         <div className={`absolute inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 text-left transition-opacity duration-700 ${slides[currentSlide]?.type === 'chess' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
           <div className="space-y-4 max-w-2xl mt-4 md:mt-2">
-            <span className="inline-block px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-400/30 text-xs font-semibold text-yellow-300 tracking-wide uppercase">
-              ♟️ Coming Soon · 2026
+            <span className="inline-block px-3 py-1 rounded-full bg-green-500/20 border border-green-400/30 text-xs font-semibold text-green-300 tracking-wide uppercase">
+              ♟️ Registration Open · 2026
             </span>
             <h1 className="font-outfit text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
               Chess Tournament{' '}
@@ -159,7 +159,7 @@ export const Home = () => {
               </span>
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-              The Chess Tournament is coming soon! Stay tuned for updates and prepare to showcase your tactical brilliance.
+              Register now for the Chess Tournament and prepare to showcase your tactical brilliance. Challenge yourself and enjoy the spirit of the game.
             </p>
             <div className="grid grid-cols-3 gap-3 max-w-md pt-2">
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 p-3 rounded-xl hover:border-yellow-400/30 transition-all duration-300">
@@ -178,10 +178,10 @@ export const Home = () => {
           </div>
           <div className="flex gap-4 mb-2 md:mb-0">
             <button
-              disabled
-              className="px-6 py-3 rounded-full text-white/60 font-bold text-sm bg-white/10 backdrop-blur-md border border-white/15 cursor-not-allowed select-none"
+              onClick={() => navigate('/register')}
+              className="px-6 py-3 rounded-full text-white font-bold text-sm bg-white/15 dark:bg-black/30 backdrop-blur-md border border-white/20 hover:bg-white/25 dark:hover:bg-black/50 shadow-lg hover:shadow-black/20 active:scale-95 transition-all duration-300 cursor-pointer"
             >
-              👉 Registration Coming Soon
+              👉 Register Now
             </button>
             <button
               onClick={() => navigate('/live')}

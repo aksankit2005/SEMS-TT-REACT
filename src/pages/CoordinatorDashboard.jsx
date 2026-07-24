@@ -789,7 +789,7 @@ export const CoordinatorDashboard = () => {
                     <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                       <td className="py-3 font-bold text-slate-900 dark:text-white">{row.fullName}</td>
                       <td className="py-3 font-mono font-bold text-slate-800 dark:text-slate-200">{row.rollNumber}</td>
-                      <td className="py-3 text-slate-900 dark:text-white font-bold">{row.sport || "Table Tennis"}</td>
+                      <td className="py-3 text-slate-900 dark:text-white font-bold">{row.sport || row.section || "Table Tennis"}</td>
                       <td className="py-3 text-slate-500">{row.collegeName} | {row.course}</td>
                       <td className="py-3">
                         <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-300">

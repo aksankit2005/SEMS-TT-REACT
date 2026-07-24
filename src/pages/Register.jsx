@@ -13,7 +13,7 @@ export const Register = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   // State variables
-  const [selectedSport, setSelectedSport] = useState('Table Tennis');
+  const [selectedSport, setSelectedSport] = useState('Chess');
   const [gameCategory, setGameCategory] = useState('singles');
   const [formData, setFormData] = useState({
     fullName: '',
@@ -53,6 +53,17 @@ export const Register = () => {
     // Numeric-only filter for Aadhaar Card Number
     if (name === "aadhaarNumber" || name === "partnerAadhaar") {
       const numericValue = value.replace(/\D/g, '').slice(0, 12);
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+    } else if (name === "mobileNumber" || name === "partnerMobile") {
+      let cleaned = value.replace(/\D/g, '');
+      if (cleaned.length > 10) {
+        if (cleaned.startsWith('91')) {
+          cleaned = cleaned.slice(2);
+        } else if (cleaned.startsWith('0')) {
+          cleaned = cleaned.slice(1);
+        }
+      }
+      const numericValue = cleaned.slice(0, 10);
       setFormData((prev) => ({ ...prev, [name]: numericValue }));
     } else if (name === "collegeName") {
       // If college changes, reset course dropdown selection
@@ -224,10 +235,11 @@ export const Register = () => {
               },
               body: JSON.stringify({
                 ...formData,
+                mobile: formData.mobileNumber,
                 sport: selectedSport,
                 branch: formData.course,
                 partnerBranch: formData.partnerCourse,
-                section: "",
+                section: selectedSport,
                 partnerSection: "",
                 gameCategory: gameCategory,
                 action: "register",
@@ -299,7 +311,7 @@ export const Register = () => {
       <div className="mb-8 p-4 bg-red-500/10 dark:bg-red-500/5 border-l-4 border-l-red-500 border border-slate-200 dark:border-slate-800 rounded-r-2xl rounded-l-md flex items-center gap-3 text-[#0f172a] dark:text-[#f8fafc] animate-fade-in">
         <i className="fa-solid fa-triangle-exclamation text-red-500 dark:text-red-400 text-lg shrink-0"></i>
         <span className="text-sm font-semibold">
-          Registration closes on 24 July (11:59 PM). No registrations will be accepted after the deadline.
+          Registration closes on 30 July 2026 (11:59 PM). No registrations will be accepted after the deadline.
         </span>
       </div>
 
@@ -307,8 +319,8 @@ export const Register = () => {
       <div className="flex justify-between items-center max-w-md mx-auto mb-10 select-none">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300 ${currentStep === 1
-              ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/10'
-              : 'border-green-500 bg-green-500 text-white'
+            ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/10'
+            : 'border-green-500 bg-green-500 text-white'
             }`}>
             {currentStep > 1 ? <i className="fa-solid fa-check"></i> : "1"}
           </div>
@@ -321,8 +333,8 @@ export const Register = () => {
           }`}></div>
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300 ${currentStep === 2
-              ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/10'
-              : 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 bg-transparent'
+            ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/10'
+            : 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 bg-transparent'
             }`}>
             2
           </div>
@@ -352,10 +364,16 @@ export const Register = () => {
                 <select
                   name="sport"
                   value={selectedSport}
-                  onChange={(e) => setSelectedSport(e.target.value)}
+                  onChange={(e) => {
+                    const sport = e.target.value;
+                    setSelectedSport(sport);
+                    if (sport === 'Chess') {
+                      setGameCategory('singles');
+                    }
+                  }}
                   className="w-full bg-slate-50 dark:bg-[#1a2744] border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-11 pr-10 text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#121d33] text-slate-900 dark:text-white appearance-none cursor-pointer"
                 >
-                  <option value="Table Tennis">Table Tennis</option>
+                  <option value="Table Tennis" disabled>Table Tennis (Closed)</option>
                   <option value="Chess">Chess</option>
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
@@ -363,91 +381,78 @@ export const Register = () => {
                 </div>
               </div>
             </div>
-
-            {selectedSport === 'Chess' ? (
-              <div className="p-8 bg-yellow-500/10 dark:bg-yellow-500/5 border border-yellow-400/30 rounded-2xl text-center space-y-4 animate-fade-in mt-6">
-                <div className="w-16 h-16 mx-auto rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-3xl">
-                  <i className="fa-solid fa-chess"></i>
-                </div>
-                <h4 className="font-outfit font-bold text-slate-900 dark:text-white text-lg">
-                  Chess Registration Coming Soon!
-                </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                  Registrations for the Chess Tournament are currently closed and will open soon. Please stay tuned for updates! Currently, registrations are only active for Table Tennis.
+            {/* Category selection */}
+            {selectedSport === 'Table Tennis' && (
+              <div>
+                <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
+                  Select Format
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                  Choose either singles or doubles registration
                 </p>
-              </div>
-            ) : (
-              <>
-                {/* Category selection */}
-            <div>
-              <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
-                Select Format
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                Choose either singles or doubles registration
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="gameCategory"
-                    checked={gameCategory === 'singles'}
-                    onChange={() => setGameCategory('singles')}
-                    className="sr-only"
-                  />
-                  <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${gameCategory === 'singles'
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="gameCategory"
+                      checked={gameCategory === 'singles'}
+                      onChange={() => setGameCategory('singles')}
+                      className="sr-only"
+                    />
+                    <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${gameCategory === 'singles'
                       ? 'border-blue-500 bg-blue-500/5 dark:bg-blue-500/10'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1a2744]/40 hover:border-slate-300'
-                    }`}>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${gameCategory === 'singles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
                       }`}>
-                      <i className="fa-solid fa-user"></i>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${gameCategory === 'singles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
+                        }`}>
+                        <i className="fa-solid fa-user"></i>
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="font-outfit font-bold text-slate-900 dark:text-white">Singles</span>
+                        <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹100</span>
+                      </div>
+                      {gameCategory === 'singles' && (
+                        <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
+                      )}
                     </div>
-                    <div className="flex flex-col text-left">
-                      <span className="font-outfit font-bold text-slate-900 dark:text-white">Singles</span>
-                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹100</span>
-                    </div>
-                    {gameCategory === 'singles' && (
-                      <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
-                    )}
-                  </div>
-                </label>
+                  </label>
 
-                <label className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="gameCategory"
-                    checked={gameCategory === 'doubles'}
-                    onChange={() => setGameCategory('doubles')}
-                    className="sr-only"
-                  />
-                  <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${gameCategory === 'doubles'
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="gameCategory"
+                      checked={gameCategory === 'doubles'}
+                      onChange={() => setGameCategory('doubles')}
+                      className="sr-only"
+                    />
+                    <div className={`flex items-center gap-4 p-4 border-2 rounded-2xl transition-all duration-300 ${gameCategory === 'doubles'
                       ? 'border-blue-500 bg-blue-500/5 dark:bg-blue-500/10'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#1a2744]/40 hover:border-slate-300'
-                    }`}>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${gameCategory === 'doubles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
                       }`}>
-                      <i className="fa-solid fa-user-group"></i>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${gameCategory === 'doubles' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-[#121d33] text-slate-500 dark:text-slate-400'
+                        }`}>
+                        <i className="fa-solid fa-user-group"></i>
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="font-outfit font-bold text-slate-900 dark:text-white">Doubles</span>
+                        <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹200</span>
+                      </div>
+                      {gameCategory === 'doubles' && (
+                        <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
+                      )}
                     </div>
-                    <div className="flex flex-col text-left">
-                      <span className="font-outfit font-bold text-slate-900 dark:text-white">Doubles</span>
-                      <span className="text-sm font-semibold text-blue-500 dark:text-blue-400">₹200</span>
-                    </div>
-                    {gameCategory === 'doubles' && (
-                      <div className="ml-auto text-blue-500"><i className="fa-solid fa-circle-check text-xl"></i></div>
-                    )}
-                  </div>
-                </label>
-              </div>
+                  </label>
+                </div>
 
-              {/* Doubles Notice */}
-              <div className="mt-4 p-3.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 rounded-2xl flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
-                <i className="fa-solid fa-circle-info text-blue-500 dark:text-blue-400 mt-0.5 shrink-0"></i>
-                <div className="font-medium leading-relaxed">
-                  Both team members must provide complete registration details. Registration Fee: ₹200 per team. Both players must belong to the same college.
+                {/* Doubles Notice */}
+                <div className="mt-4 p-3.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 rounded-2xl flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+                  <i className="fa-solid fa-circle-info text-blue-500 dark:text-blue-400 mt-0.5 shrink-0"></i>
+                  <div className="font-medium leading-relaxed">
+                    Both team members must provide complete registration details. Registration Fee: ₹200 per team. Both players must belong to the same college.
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Participant Details */}
             <div>
@@ -866,11 +871,8 @@ export const Register = () => {
                 Next: Proceed to Payment <i className="fa-solid fa-arrow-right"></i>
               </button>
             </div>
-          </>
+          </div>
         )}
-      </div>
-    )}
-
         {/* STEP 2: Razorpay Payment Integration */}
         {currentStep === 2 && (
           <div className="space-y-8 animate-fade-in">
@@ -976,11 +978,10 @@ export const Register = () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!declarationAccepted || loading}
-                className={`w-full sm:w-2/3 font-semibold text-lg py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  declarationAccepted
+                className={`w-full sm:w-2/3 font-semibold text-lg py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${declarationAccepted
                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 text-white hover:brightness-110 active:scale-[0.99]"
                     : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 {loading ? (
                   <>
