@@ -26,17 +26,28 @@ export const Home = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [schedules, setSchedules] = useState([]);
-  const [liveMatch, setLiveMatch] = useState(null);
+  const [liveMatch1, setLiveMatch1] = useState(null);
+  const [liveMatch2, setLiveMatch2] = useState(null);
 
   const fetchLiveHub = async () => {
     try {
-      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchedules`);
+      // Add timestamp cache-buster to ensure the browser doesn't cache GET responses
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchedules&_=${Date.now()}`);
       const json = await response.json();
       if (json.status === "success") {
         const list = json.data || [];
         setSchedules(list);
-        const live = list.find(m => String(m.status).toLowerCase() === 'live');
-        setLiveMatch(live || null);
+        
+        // Robust check matching 'Table 1' / 'table 1' / 'table1' etc.
+        const isTable = (val, target) => {
+          if (!val) return false;
+          return String(val).replace(/\s+/g, '').toLowerCase() === target;
+        };
+
+        const live1 = list.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table1'));
+        const live2 = list.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table2'));
+        setLiveMatch1(live1 || null);
+        setLiveMatch2(live2 || null);
       }
     } catch (err) {
       console.error("Failed to poll live scores: ", err);
@@ -235,31 +246,59 @@ export const Home = () => {
         <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-lg flex flex-col justify-between transition-colors duration-300 min-h-[320px]">
           <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-4 mb-4">
             <h3 className="font-outfit text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${liveMatch ? 'bg-red-500 animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`}></span>
+              <span className={`w-2 h-2 rounded-full ${(liveMatch1 || liveMatch2) ? 'bg-red-500 animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`}></span>
               Live Match Scoreboard
             </h3>
             <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-              {liveMatch ? '1 Active Match' : '0 Active Matches'}
+              {((liveMatch1 ? 1 : 0) + (liveMatch2 ? 1 : 0)) === 1 ? '1 Active Match' : `${(liveMatch1 ? 1 : 0) + (liveMatch2 ? 1 : 0)} Active Matches`}
             </span>
           </div>
 
-          {liveMatch ? (
-            <div className="flex-grow flex flex-col justify-center py-4 text-center">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-500 dark:text-blue-400 mb-2">
-                {liveMatch.category} · {liveMatch.tableNumber}
-              </span>
-              <div className="flex items-center justify-around gap-2 my-2 select-none">
-                <div className="w-5/12 text-right">
-                  <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch.player1Name}</h4>
-                  <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch.player1Score}</div>
+          {(liveMatch1 || liveMatch2) ? (
+            <div className="flex-grow flex flex-col justify-center divide-y divide-slate-100 dark:divide-slate-800/50">
+              {liveMatch1 && (
+                <div className="py-4 text-center">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-500 dark:text-blue-400 mb-2 block">
+                    {liveMatch1.category} · {liveMatch1.tableNumber}
+                  </span>
+                  <div className="flex items-center justify-around gap-2 my-2 select-none">
+                    <div className="w-5/12 text-right">
+                      <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch1.player1Name}</h4>
+                      <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch1.player1Score}</div>
+                    </div>
+                    <div className="text-xs font-bold text-slate-400 px-2">VS</div>
+                    <div className="w-5/12 text-left">
+                      <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch1.player2Name}</h4>
+                      <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch1.player2Score}</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-semibold block mt-2">
+                    <i className="fa-solid fa-clock"></i> Match Slot: {formatTime(liveMatch1.matchTime)}
+                  </span>
                 </div>
-                <div className="text-xs font-bold text-slate-400 px-2">VS</div>
-                <div className="w-5/12 text-left">
-                  <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch.player2Name}</h4>
-                  <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch.player2Score}</div>
+              )}
+
+              {liveMatch2 && (
+                <div className="py-4 text-center">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-500 dark:text-blue-400 mb-2 block">
+                    {liveMatch2.category} · {liveMatch2.tableNumber}
+                  </span>
+                  <div className="flex items-center justify-around gap-2 my-2 select-none">
+                    <div className="w-5/12 text-right">
+                      <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch2.player1Name}</h4>
+                      <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch2.player1Score}</div>
+                    </div>
+                    <div className="text-xs font-bold text-slate-400 px-2">VS</div>
+                    <div className="w-5/12 text-left">
+                      <h4 className="font-outfit font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">{liveMatch2.player2Name}</h4>
+                      <div className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">{liveMatch2.player2Score}</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-semibold block mt-2">
+                    <i className="fa-solid fa-clock"></i> Match Slot: {formatTime(liveMatch2.matchTime)}
+                  </span>
                 </div>
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold block mt-4"><i className="fa-solid fa-clock"></i> Match Slot: {formatTime(liveMatch.matchTime)}</span>
+              )}
             </div>
           ) : (
             /* Empty State: No Live Matches */

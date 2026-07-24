@@ -35,11 +35,12 @@ export const CoordinatorDashboard = () => {
   // Local state
   const [registrations, setRegistrations] = useState([]);
   const [schedules, setSchedules] = useState([]);
-  const [liveMatch, setLiveMatch] = useState(null);
+  const [liveMatch1, setLiveMatch1] = useState(null);
+  const [liveMatch2, setLiveMatch2] = useState(null);
+  const [scoringMatch, setScoringMatch] = useState(null);
   const [activeTab, setActiveTab] = useState('schedule');
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isScoringActive, setIsScoringActive] = useState(false);
 
   // Form states for manual match creation
   const [manualMatch, setManualMatch] = useState({
@@ -89,14 +90,33 @@ export const CoordinatorDashboard = () => {
       }
 
       // 2. Fetch Schedules
-      const schedUrl = `${GOOGLE_SCRIPT_URL}?action=getSchedules`;
+      // Add timestamp cache-buster to ensure the browser doesn't cache GET responses
+      const schedUrl = `${GOOGLE_SCRIPT_URL}?action=getSchedules&_=${Date.now()}`;
       const schedRes = await fetch(schedUrl);
       const schedJson = await schedRes.json();
       if (schedJson.status === "success") {
         setSchedules(schedJson.data || []);
-        // Set live match if any
-        const live = (schedJson.data || []).find(m => String(m.status).toLowerCase() === 'live');
-        setLiveMatch(live || null);
+        
+        // Robust check matching 'Table 1' / 'table 1' / 'table1' etc.
+        const isTable = (val, target) => {
+          if (!val) return false;
+          return String(val).replace(/\s+/g, '').toLowerCase() === target;
+        };
+
+        // Set live matches
+        const live1 = (schedJson.data || []).find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table1'));
+        const live2 = (schedJson.data || []).find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table2'));
+        setLiveMatch1(live1 || null);
+        setLiveMatch2(live2 || null);
+        // Also update scoringMatch if it's currently open (only if it is still live)
+        if (scoringMatch) {
+          const updatedScoring = (schedJson.data || []).find(m => m.matchId === scoringMatch.matchId);
+          if (updatedScoring && String(updatedScoring.status).toLowerCase() === 'live') {
+            setScoringMatch(updatedScoring);
+          } else {
+            setScoringMatch(null);
+          }
+        }
       }
     } catch (err) {
       console.error(err);
@@ -107,10 +127,16 @@ export const CoordinatorDashboard = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchData();
-    }
-  }, []);
+    if (!isAuthenticated) return;
+    fetchData();
+    const timer = setInterval(() => {
+      // Only poll automatically if the user is not actively editing a schedule
+      if (editingMatch === null) {
+        fetchData();
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, editingMatch]);
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
@@ -153,8 +179,14 @@ export const CoordinatorDashboard = () => {
       const json = await res.json();
       if (json.status === "success") {
         setSchedules(updatedSchedules);
-        const live = updatedSchedules.find(m => String(m.status).toLowerCase() === 'live');
-        setLiveMatch(live || null);
+        const isTable = (val, target) => {
+          if (!val) return false;
+          return String(val).replace(/\s+/g, '').toLowerCase() === target;
+        };
+        const live1 = updatedSchedules.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table1'));
+        const live2 = updatedSchedules.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table2'));
+        setLiveMatch1(live1 || null);
+        setLiveMatch2(live2 || null);
         showToast("Schedules saved successfully!", "success");
       } else {
         throw new Error(json.message);
@@ -262,6 +294,55 @@ export const CoordinatorDashboard = () => {
     } catch (err) {
       console.error(err);
       showToast("Failed to update match: " + err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch latest, update fields, and save to prevent concurrency overwriting from multiple coordinators
+  const handleUpdateMatchStatus = async (matchId, fieldsToUpdate) => {
+    setLoading(true);
+    try {
+      const schedUrl = `${GOOGLE_SCRIPT_URL}?action=getSchedules&_=${Date.now()}`;
+      const schedRes = await fetch(schedUrl);
+      const schedJson = await schedRes.json();
+      if (schedJson.status === "success") {
+        const latestSchedules = schedJson.data || [];
+        
+        // Robust check matching 'Table 1' / 'table 1' / 'table1' etc.
+        const isTable = (val, target) => {
+          if (!val) return false;
+          return String(val).replace(/\s+/g, '').toLowerCase() === target;
+        };
+
+        const updated = latestSchedules.map(m => m.matchId === matchId ? { ...m, ...fieldsToUpdate } : m);
+        
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "saveSchedules",
+            passcode: passcode,
+            schedules: updated
+          })
+        });
+        const json = await res.json();
+        if (json.status === "success") {
+          setSchedules(updated);
+          const live1 = updated.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table1'));
+          const live2 = updated.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table2'));
+          setLiveMatch1(live1 || null);
+          setLiveMatch2(live2 || null);
+          showToast("Match updated successfully!", "success");
+        } else {
+          throw new Error(json.message);
+        }
+      } else {
+        throw new Error(schedJson.message);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update match status: " + err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -579,55 +660,122 @@ export const CoordinatorDashboard = () => {
         {/* TAB 2: Live Match Control */}
         {activeTab === 'live' && (
           <div className="space-y-6">
-            {/* Live Controller Dashboard */}
-            {liveMatch ? (
-              <div className="bg-gradient-to-br from-indigo-900 via-[#121d33] to-[#0d1629] border border-indigo-500/20 rounded-3xl p-8 text-center text-white relative shadow-xl">
-                <span className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold uppercase tracking-wider animate-pulse select-none">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full"></span> Live Match Active
-                </span>
+            {/* Live Controller Dashboard Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Table 1 Live Match Control */}
+              {liveMatch1 ? (
+                <div className="bg-gradient-to-br from-indigo-900 via-[#121d33] to-[#0d1629] border border-indigo-500/20 rounded-3xl p-8 text-center text-white relative shadow-xl flex flex-col justify-between min-h-[320px]">
+                  <span className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold uppercase tracking-wider animate-pulse select-none">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full"></span> Live (Table 1)
+                  </span>
 
-                <span className="text-xs uppercase font-extrabold tracking-widest text-indigo-400">
-                  Live Match Center
-                </span>
+                  <div>
+                    <span className="text-xs uppercase font-extrabold tracking-widest text-indigo-400">
+                      Live Match Center
+                    </span>
 
-                <h4 className="font-outfit font-extrabold text-2xl tracking-tight text-white mb-2 mt-6">
-                  {liveMatch.player1Name} <span className="text-xs text-indigo-300 font-normal">vs</span> {liveMatch.player2Name}
-                </h4>
-                <p className="text-xs text-indigo-300 font-mono">
-                  #{liveMatch.matchId} · {liveMatch.category} · {liveMatch.tableNumber}
-                </p>
+                    <h4 className="font-outfit font-extrabold text-2xl tracking-tight text-white mb-2 mt-6">
+                      {liveMatch1.player1Name} <span className="text-xs text-indigo-300 font-normal">vs</span> {liveMatch1.player2Name}
+                    </h4>
+                    <p className="text-xs text-indigo-300 font-mono mb-4">
+                      #{liveMatch1.matchId} · {liveMatch1.category} · {liveMatch1.tableNumber}
+                    </p>
+                  </div>
 
-                <div className="my-8 flex justify-center gap-4">
-                  <button
-                    onClick={() => setIsScoringActive(true)}
-                    className="px-8 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold rounded-xl transition-all shadow-md hover:shadow-indigo-500/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer select-none text-sm"
-                  >
-                    <i className="fa-solid fa-gamepad"></i> Open Match Score Controller
-                  </button>
+                  <div>
+                    <div className="my-6 flex justify-center gap-4">
+                      <button
+                        onClick={() => setScoringMatch(liveMatch1)}
+                        className="w-full px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold rounded-xl transition-all shadow-md hover:shadow-indigo-500/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer select-none text-sm"
+                      >
+                        <i className="fa-solid fa-gamepad"></i> Open Match Score Controller
+                      </button>
+                    </div>
+                    
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          const winnerName = parseInt(liveMatch1.player1Score) > parseInt(liveMatch1.player2Score) ? liveMatch1.player1Name : liveMatch1.player2Name;
+                          handleUpdateMatchStatus(liveMatch1.matchId, { status: 'Completed', winner: winnerName });
+                        }}
+                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                      >
+                        <i className="fa-solid fa-circle-check"></i> Complete
+                      </button>
+                      <button
+                        onClick={() => handleUpdateMatchStatus(liveMatch1.matchId, { status: 'Upcoming' })}
+                        className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                      >
+                        Demote
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex justify-center gap-3">
-                  <button
-                    onClick={() => handleUpdateMatchOnServer(liveMatch.matchId, { status: 'Completed', winner: parseInt(liveMatch.player1Score) > parseInt(liveMatch.player2Score) ? liveMatch.player1Name : liveMatch.player2Name })}
-                    className="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5"
-                  >
-                    <i className="fa-solid fa-circle-check"></i> Complete & Declare Winner
-                  </button>
-                  <button
-                    onClick={() => handleUpdateMatchOnServer(liveMatch.matchId, { status: 'Upcoming' })}
-                    className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold cursor-pointer"
-                  >
-                    Demote to Upcoming
-                  </button>
+              ) : (
+                <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center shadow-sm flex flex-col items-center justify-center min-h-[320px]">
+                  <i className="fa-solid fa-circle-play text-4xl text-slate-300 dark:text-slate-600 mb-3"></i>
+                  <h4 className="font-bold text-slate-900 dark:text-white">Table 1: No Live Match</h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">Select a match from the schedule below and click "Go Live" to stream score updates.</p>
                 </div>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center shadow-sm">
-                <i className="fa-solid fa-circle-play text-4xl text-slate-300 dark:text-slate-600 mb-3"></i>
-                <h4 className="font-bold text-slate-900 dark:text-white">No active live match</h4>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">Select a match from the schedule below and click "Go Live" to stream score updates.</p>
-              </div>
-            )}
+              )}
+
+              {/* Table 2 Live Match Control */}
+              {liveMatch2 ? (
+                <div className="bg-gradient-to-br from-indigo-900 via-[#121d33] to-[#0d1629] border border-indigo-500/20 rounded-3xl p-8 text-center text-white relative shadow-xl flex flex-col justify-between min-h-[320px]">
+                  <span className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-red-500 text-white rounded-full text-xs font-bold uppercase tracking-wider animate-pulse select-none">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full"></span> Live (Table 2)
+                  </span>
+
+                  <div>
+                    <span className="text-xs uppercase font-extrabold tracking-widest text-indigo-400">
+                      Live Match Center
+                    </span>
+
+                    <h4 className="font-outfit font-extrabold text-2xl tracking-tight text-white mb-2 mt-6">
+                      {liveMatch2.player1Name} <span className="text-xs text-indigo-300 font-normal">vs</span> {liveMatch2.player2Name}
+                    </h4>
+                    <p className="text-xs text-indigo-300 font-mono mb-4">
+                      #{liveMatch2.matchId} · {liveMatch2.category} · {liveMatch2.tableNumber}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="my-6 flex justify-center gap-4">
+                      <button
+                        onClick={() => setScoringMatch(liveMatch2)}
+                        className="w-full px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold rounded-xl transition-all shadow-md hover:shadow-indigo-500/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer select-none text-sm"
+                      >
+                        <i className="fa-solid fa-gamepad"></i> Open Match Score Controller
+                      </button>
+                    </div>
+                    
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          const winnerName = parseInt(liveMatch2.player1Score) > parseInt(liveMatch2.player2Score) ? liveMatch2.player1Name : liveMatch2.player2Name;
+                          handleUpdateMatchStatus(liveMatch2.matchId, { status: 'Completed', winner: winnerName });
+                        }}
+                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                      >
+                        <i className="fa-solid fa-circle-check"></i> Complete
+                      </button>
+                      <button
+                        onClick={() => handleUpdateMatchStatus(liveMatch2.matchId, { status: 'Upcoming' })}
+                        className="px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                      >
+                        Demote
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center shadow-sm flex flex-col items-center justify-center min-h-[320px]">
+                  <i className="fa-solid fa-circle-play text-4xl text-slate-300 dark:text-slate-600 mb-3"></i>
+                  <h4 className="font-bold text-slate-900 dark:text-white">Table 2: No Live Match</h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">Select a match from the schedule below and click "Go Live" to stream score updates.</p>
+                </div>
+              )}
+            </div>
 
             {/* List to promote to live */}
             <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md text-left">
@@ -648,7 +796,7 @@ export const CoordinatorDashboard = () => {
                       <span className="text-[10px] text-slate-400 block mt-0.5">{match.tableNumber} | Slot: {match.matchTime}</span>
                     </div>
                     <button
-                      onClick={() => handleUpdateMatchOnServer(match.matchId, { status: 'Live' })}
+                      onClick={() => handleUpdateMatchStatus(match.matchId, { status: 'Live' })}
                       className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold tracking-wide uppercase flex items-center gap-1 cursor-pointer"
                     >
                       <i className="fa-solid fa-tower-broadcast"></i> Go Live
@@ -725,7 +873,7 @@ export const CoordinatorDashboard = () => {
                                 const p1Int = parseInt(p1) || 0;
                                 const p2Int = parseInt(p2) || 0;
                                 const winnerName = p1Int > p2Int ? match.player1Name : p2Int > p1Int ? match.player2Name : "Draw";
-                                handleUpdateMatchOnServer(match.matchId, {
+                                handleUpdateMatchStatus(match.matchId, {
                                   player1Score: p1Int,
                                   player2Score: p2Int,
                                   status: 'Completed',
@@ -811,11 +959,11 @@ export const CoordinatorDashboard = () => {
           </div>
         )}
       </div>
-      {isScoringActive && liveMatch && (
+      {scoringMatch && (
         <CoordinatorScoring
-          match={liveMatch}
+          match={scoringMatch}
           passcode={passcode}
-          onClose={() => setIsScoringActive(false)}
+          onClose={() => setScoringMatch(null)}
           onUpdate={fetchData}
         />
       )}
@@ -826,8 +974,11 @@ export const CoordinatorDashboard = () => {
   async function updateScoreOnServer(matchId, p1Score, p2Score) {
     // Optimistic UI updates
     setSchedules(prev => prev.map(m => m.matchId === matchId ? { ...m, player1Score: p1Score, player2Score: p2Score } : m));
-    if (liveMatch && liveMatch.matchId === matchId) {
-      setLiveMatch(prev => ({ ...prev, player1Score: p1Score, player2Score: p2Score }));
+    if (liveMatch1 && liveMatch1.matchId === matchId) {
+      setLiveMatch1(prev => ({ ...prev, player1Score: p1Score, player2Score: p2Score }));
+    }
+    if (liveMatch2 && liveMatch2.matchId === matchId) {
+      setLiveMatch2(prev => ({ ...prev, player1Score: p1Score, player2Score: p2Score }));
     }
 
     try {

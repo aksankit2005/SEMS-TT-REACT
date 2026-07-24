@@ -25,19 +25,30 @@ const formatTime = (timeStr) => {
 export const Live = () => {
   const navigate = useNavigate();
   const [schedules, setSchedules] = useState([]);
-  const [liveMatch, setLiveMatch] = useState(null);
+  const [liveMatch1, setLiveMatch1] = useState(null);
+  const [liveMatch2, setLiveMatch2] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Poll schedules & live match every 5 seconds for real-time scores
+  // Poll schedules & live matches every 5 seconds for real-time scores
   const fetchLiveHub = async () => {
     try {
-      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchedules`);
+      // Add timestamp cache-buster to ensure the browser doesn't cache GET responses
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchedules&_=${Date.now()}`);
       const json = await response.json();
       if (json.status === "success") {
         const list = json.data || [];
         setSchedules(list);
-        const live = list.find(m => String(m.status).toLowerCase() === 'live');
-        setLiveMatch(live || null);
+        
+        // Robust check matching 'Table 1' / 'table 1' / 'table1' etc.
+        const isTable = (val, target) => {
+          if (!val) return false;
+          return String(val).replace(/\s+/g, '').toLowerCase() === target;
+        };
+
+        const live1 = list.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table1'));
+        const live2 = list.find(m => String(m.status).toLowerCase() === 'live' && isTable(m.tableNumber, 'table2'));
+        setLiveMatch1(live1 || null);
+        setLiveMatch2(live2 || null);
       }
     } catch (err) {
       console.error("Failed to poll live scores: ", err);
@@ -79,86 +90,170 @@ export const Live = () => {
         </button>
       </div>
 
-      {/* Live Match Scoreboard Card */}
-      {liveMatch ? (
-        <div className="bg-gradient-to-br from-indigo-900 via-[#121d33] to-[#0d1629] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 text-center text-white relative shadow-xl">
-          <span className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse select-none">
-            <span className="w-1.5 h-1.5 bg-white rounded-full"></span> Live Score
-          </span>
+      {/* Live Match Scoreboards Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Table 1 Match Scoreboard */}
+        {liveMatch1 ? (
+          <div className="bg-gradient-to-br from-indigo-900 via-[#121d33] to-[#0d1629] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 text-center text-white relative shadow-xl flex flex-col justify-between min-h-[360px]">
+            <span className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse select-none">
+              <span className="w-1.5 h-1.5 bg-white rounded-full"></span> Live Score
+            </span>
 
-          <span className="text-[10px] uppercase font-extrabold tracking-widest text-indigo-400">
-            {liveMatch.category} tournament
-          </span>
+            <span className="text-[10px] uppercase font-extrabold tracking-widest text-indigo-400">
+              {liveMatch1.category} tournament
+            </span>
 
-          {/* Teams / Players Grid */}
-          <div className="grid grid-cols-5 items-center max-w-2xl mx-auto my-6 gap-4 select-none">
-            {/* Player 1 Details */}
-            <div className="col-span-2 flex flex-col items-center">
-              <h4 className="font-outfit font-extrabold text-lg sm:text-2xl tracking-tight line-clamp-1 flex items-center gap-1.5">
-                {liveMatch.player1Name}
-                {liveMatch.currentServer === "Player 1" && <span className="text-sm" title="Serving">🏓</span>}
-              </h4>
-              <span className="text-xs text-indigo-300 font-mono mt-1">Roll: {liveMatch.player1Roll}</span>
-              <div className="text-6xl sm:text-8xl font-extrabold font-mono text-white mt-4 drop-shadow-lg leading-none">
-                {liveMatch.player1Score}
+            {/* Teams / Players Grid */}
+            <div className="grid grid-cols-5 items-center max-w-2xl mx-auto my-6 gap-4 select-none">
+              {/* Player 1 Details */}
+              <div className="col-span-2 flex flex-col items-center">
+                <h4 className="font-outfit font-extrabold text-lg sm:text-xl tracking-tight line-clamp-1 flex items-center gap-1.5">
+                  {liveMatch1.player1Name}
+                  {liveMatch1.currentServer === "Player 1" && <span className="text-sm" title="Serving">🏓</span>}
+                </h4>
+                <span className="text-xs text-indigo-300 font-mono mt-1">Roll: {liveMatch1.player1Roll}</span>
+                <div className="text-6xl sm:text-7xl font-extrabold font-mono text-white mt-4 drop-shadow-lg leading-none">
+                  {liveMatch1.player1Score}
+                </div>
+                <span className="text-xs font-bold text-slate-400 mt-3">Sets Won: <span className="text-indigo-400 text-sm font-mono font-extrabold">{liveMatch1.setsWonP1 || 0}</span></span>
               </div>
-              <span className="text-xs font-bold text-slate-400 mt-3">Sets Won: <span className="text-indigo-400 text-sm font-mono font-extrabold">{liveMatch.setsWonP1 || 0}</span></span>
-            </div>
 
-            {/* VS Division */}
-            <div className="col-span-1 flex flex-col items-center text-indigo-400">
-              <span className="text-sm font-bold tracking-widest text-slate-400/80">VS</span>
-              <span className="text-[10px] mt-4 font-bold bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 whitespace-nowrap">
-                {liveMatch.tableNumber}
-              </span>
-            </div>
-
-            {/* Player 2 Details */}
-            <div className="col-span-2 flex flex-col items-center">
-              <h4 className="font-outfit font-extrabold text-lg sm:text-2xl tracking-tight line-clamp-1 flex items-center gap-1.5">
-                {liveMatch.player2Name}
-                {liveMatch.currentServer === "Player 2" && <span className="text-sm" title="Serving">🏓</span>}
-              </h4>
-              <span className="text-xs text-indigo-300 font-mono mt-1">Roll: {liveMatch.player2Roll}</span>
-              <div className="text-6xl sm:text-8xl font-extrabold font-mono text-white mt-4 drop-shadow-lg leading-none">
-                {liveMatch.player2Score}
+              {/* VS Division */}
+              <div className="col-span-1 flex flex-col items-center text-indigo-400">
+                <span className="text-sm font-bold tracking-widest text-slate-400/80">VS</span>
+                <span className="text-[10px] mt-4 font-bold bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 whitespace-nowrap">
+                  {liveMatch1.tableNumber}
+                </span>
               </div>
-              <span className="text-xs font-bold text-slate-400 mt-3">Sets Won: <span className="text-indigo-400 text-sm font-mono font-extrabold">{liveMatch.setsWonP2 || 0}</span></span>
+
+              {/* Player 2 Details */}
+              <div className="col-span-2 flex flex-col items-center">
+                <h4 className="font-outfit font-extrabold text-lg sm:text-xl tracking-tight line-clamp-1 flex items-center gap-1.5">
+                  {liveMatch1.player2Name}
+                  {liveMatch1.currentServer === "Player 2" && <span className="text-sm" title="Serving">🏓</span>}
+                </h4>
+                <span className="text-xs text-indigo-300 font-mono mt-1">Roll: {liveMatch1.player2Roll}</span>
+                <div className="text-6xl sm:text-7xl font-extrabold font-mono text-white mt-4 drop-shadow-lg leading-none">
+                  {liveMatch1.player2Score}
+                </div>
+                <span className="text-xs font-bold text-slate-400 mt-3">Sets Won: <span className="text-indigo-400 text-sm font-mono font-extrabold">{liveMatch1.setsWonP2 || 0}</span></span>
+              </div>
+            </div>
+
+            {/* Set Scores tracker log */}
+            {((liveMatch1.set1Score && liveMatch1.set1Score !== "0-0") || 
+              (liveMatch1.set2Score && liveMatch1.set2Score !== "0-0") || 
+              (liveMatch1.set3Score && liveMatch1.set3Score !== "0-0") ||
+              (liveMatch1.set4Score && liveMatch1.set4Score !== "0-0") ||
+              (liveMatch1.set5Score && liveMatch1.set5Score !== "0-0")) && (
+              <div className="bg-[#0e1626]/40 border border-slate-800 rounded-xl p-3 max-w-md mx-auto mb-4 flex flex-wrap justify-center gap-4 text-xs font-mono font-semibold text-slate-300">
+                {liveMatch1.set1Score && liveMatch1.set1Score !== "0-0" && <span>Set 1: {liveMatch1.set1Score}</span>}
+                {liveMatch1.set2Score && liveMatch1.set2Score !== "0-0" && <span>Set 2: {liveMatch1.set2Score}</span>}
+                {liveMatch1.set3Score && liveMatch1.set3Score !== "0-0" && <span>Set 3: {liveMatch1.set3Score}</span>}
+                {liveMatch1.set4Score && liveMatch1.set4Score !== "0-0" && <span>Set 4: {liveMatch1.set4Score}</span>}
+                {liveMatch1.set5Score && liveMatch1.set5Score !== "0-0" && <span>Set 5: {liveMatch1.set5Score}</span>}
+              </div>
+            )}
+
+            <div className="text-xs text-indigo-300 tracking-wider font-semibold mt-auto">
+              <i className="fa-solid fa-clock"></i> Match started at {formatTime(liveMatch1.matchTime)}
             </div>
           </div>
-
-          {/* Set Scores tracker log */}
-          {((liveMatch.set1Score && liveMatch.set1Score !== "0-0") || 
-            (liveMatch.set2Score && liveMatch.set2Score !== "0-0") || 
-            (liveMatch.set3Score && liveMatch.set3Score !== "0-0") ||
-            (liveMatch.set4Score && liveMatch.set4Score !== "0-0") ||
-            (liveMatch.set5Score && liveMatch.set5Score !== "0-0")) && (
-            <div className="bg-[#0e1626]/40 border border-slate-800 rounded-xl p-3 max-w-md mx-auto mb-4 flex flex-wrap justify-center gap-4 text-xs font-mono font-semibold text-slate-300">
-              {liveMatch.set1Score && liveMatch.set1Score !== "0-0" && <span>Set 1: {liveMatch.set1Score}</span>}
-              {liveMatch.set2Score && liveMatch.set2Score !== "0-0" && <span>Set 2: {liveMatch.set2Score}</span>}
-              {liveMatch.set3Score && liveMatch.set3Score !== "0-0" && <span>Set 3: {liveMatch.set3Score}</span>}
-              {liveMatch.set4Score && liveMatch.set4Score !== "0-0" && <span>Set 4: {liveMatch.set4Score}</span>}
-              {liveMatch.set5Score && liveMatch.set5Score !== "0-0" && <span>Set 5: {liveMatch.set5Score}</span>}
+        ) : (
+          <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-lg transition-colors duration-300 flex flex-col items-center justify-center min-h-[360px]">
+            <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-3xl mb-4">
+              <i className="fa-solid fa-table-tennis-paddle-ball text-blue-500/50"></i>
             </div>
-          )}
+            <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
+              Table 1: No Live Match
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+              Updates will flash here in real time as soon as coordinator goes live with a match!
+            </p>
+          </div>
+        )}
 
-          <div className="text-xs text-indigo-300 tracking-wider font-semibold">
-            <i className="fa-solid fa-clock"></i> Match started at {formatTime(liveMatch.matchTime)}
+        {/* Table 2 Match Scoreboard */}
+        {liveMatch2 ? (
+          <div className="bg-gradient-to-br from-indigo-900 via-[#121d33] to-[#0d1629] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 text-center text-white relative shadow-xl flex flex-col justify-between min-h-[360px]">
+            <span className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-red-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse select-none">
+              <span className="w-1.5 h-1.5 bg-white rounded-full"></span> Live Score
+            </span>
+
+            <span className="text-[10px] uppercase font-extrabold tracking-widest text-indigo-400">
+              {liveMatch2.category} tournament
+            </span>
+
+            {/* Teams / Players Grid */}
+            <div className="grid grid-cols-5 items-center max-w-2xl mx-auto my-6 gap-4 select-none">
+              {/* Player 1 Details */}
+              <div className="col-span-2 flex flex-col items-center">
+                <h4 className="font-outfit font-extrabold text-lg sm:text-xl tracking-tight line-clamp-1 flex items-center gap-1.5">
+                  {liveMatch2.player1Name}
+                  {liveMatch2.currentServer === "Player 1" && <span className="text-sm" title="Serving">🏓</span>}
+                </h4>
+                <span className="text-xs text-indigo-300 font-mono mt-1">Roll: {liveMatch2.player1Roll}</span>
+                <div className="text-6xl sm:text-7xl font-extrabold font-mono text-white mt-4 drop-shadow-lg leading-none">
+                  {liveMatch2.player1Score}
+                </div>
+                <span className="text-xs font-bold text-slate-400 mt-3">Sets Won: <span className="text-indigo-400 text-sm font-mono font-extrabold">{liveMatch2.setsWonP1 || 0}</span></span>
+              </div>
+
+              {/* VS Division */}
+              <div className="col-span-1 flex flex-col items-center text-indigo-400">
+                <span className="text-sm font-bold tracking-widest text-slate-400/80">VS</span>
+                <span className="text-[10px] mt-4 font-bold bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 whitespace-nowrap">
+                  {liveMatch2.tableNumber}
+                </span>
+              </div>
+
+              {/* Player 2 Details */}
+              <div className="col-span-2 flex flex-col items-center">
+                <h4 className="font-outfit font-extrabold text-lg sm:text-xl tracking-tight line-clamp-1 flex items-center gap-1.5">
+                  {liveMatch2.player2Name}
+                  {liveMatch2.currentServer === "Player 2" && <span className="text-sm" title="Serving">🏓</span>}
+                </h4>
+                <span className="text-xs text-indigo-300 font-mono mt-1">Roll: {liveMatch2.player2Roll}</span>
+                <div className="text-6xl sm:text-7xl font-extrabold font-mono text-white mt-4 drop-shadow-lg leading-none">
+                  {liveMatch2.player2Score}
+                </div>
+                <span className="text-xs font-bold text-slate-400 mt-3">Sets Won: <span className="text-indigo-400 text-sm font-mono font-extrabold">{liveMatch2.setsWonP2 || 0}</span></span>
+              </div>
+            </div>
+
+            {/* Set Scores tracker log */}
+            {((liveMatch2.set1Score && liveMatch2.set1Score !== "0-0") || 
+              (liveMatch2.set2Score && liveMatch2.set2Score !== "0-0") || 
+              (liveMatch2.set3Score && liveMatch2.set3Score !== "0-0") ||
+              (liveMatch2.set4Score && liveMatch2.set4Score !== "0-0") ||
+              (liveMatch2.set5Score && liveMatch2.set5Score !== "0-0")) && (
+              <div className="bg-[#0e1626]/40 border border-slate-800 rounded-xl p-3 max-w-md mx-auto mb-4 flex flex-wrap justify-center gap-4 text-xs font-mono font-semibold text-slate-300">
+                {liveMatch2.set1Score && liveMatch2.set1Score !== "0-0" && <span>Set 1: {liveMatch2.set1Score}</span>}
+                {liveMatch2.set2Score && liveMatch2.set2Score !== "0-0" && <span>Set 2: {liveMatch2.set2Score}</span>}
+                {liveMatch2.set3Score && liveMatch2.set3Score !== "0-0" && <span>Set 3: {liveMatch2.set3Score}</span>}
+                {liveMatch2.set4Score && liveMatch2.set4Score !== "0-0" && <span>Set 4: {liveMatch2.set4Score}</span>}
+                {liveMatch2.set5Score && liveMatch2.set5Score !== "0-0" && <span>Set 5: {liveMatch2.set5Score}</span>}
+              </div>
+            )}
+
+            <div className="text-xs text-indigo-300 tracking-wider font-semibold mt-auto">
+              <i className="fa-solid fa-clock"></i> Match started at {formatTime(liveMatch2.matchTime)}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-lg transition-colors duration-300 flex flex-col items-center justify-center min-h-[280px]">
-          <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-3xl mb-4">
-            <i className="fa-solid fa-table-tennis-paddle-ball text-blue-500/50"></i>
+        ) : (
+          <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-lg transition-colors duration-300 flex flex-col items-center justify-center min-h-[360px]">
+            <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center text-3xl mb-4">
+              <i className="fa-solid fa-table-tennis-paddle-ball text-blue-500/50"></i>
+            </div>
+            <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
+              Table 2: No Live Match
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+              Updates will flash here in real time as soon as coordinator goes live with a match!
+            </p>
           </div>
-          <h3 className="font-outfit text-xl font-bold text-slate-900 dark:text-white mb-1">
-            No Live Matches Right Now
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-            Updates will flash here in real time as soon as coordinator goes live with a match!
-          </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Match Schedules & Draws */}
       <div className="bg-white dark:bg-[#121d33] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-lg transition-colors duration-300 text-left">
